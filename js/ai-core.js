@@ -119,13 +119,20 @@
     chipsEl: null,
     inputEl: null,
     formEl: null,
+    voiceBtn: null,
     typing: false,
     tourTimer: null,
     tourIndex: 0,
     reducedMotion: false,
+    voiceEnabled: true,
+    speechSupported: false,
     lastLang: null,
     ready: false
   };
+
+  var VOICE_KEY = 'hls-ai-voice';
+  var SPEECH_LANG = { en: 'en-US', ru: 'ru-RU', zh: 'zh-CN' };
+  var speechVoices = [];
 
   function getLang() {
     var stored = localStorage.getItem('hls-lang');
@@ -238,6 +245,8 @@
   }
 
   function typeBotMessage(text, done) {
+    stopSpeech();
+
     if (state.reducedMotion) {
       appendBubble(text, 'bot');
       if (done) done();
@@ -269,7 +278,106 @@
   }
 
   function sayBot(key, vars, done) {
-    typeBotMessage(t(key, vars), done);
+    var text = t(key, vars);
+    typeBotMessage(text, function () {
+      speak(text);
+      if (done) done();
+    });
+  }
+
+  function stopSpeech() {
+    if (!state.speechSupported) return;
+    window.speechSynthesis.cancel();
+  }
+
+  function refreshSpeechVoices() {
+    if (!state.speechSupported) return;
+    speechVoices = window.speechSynthesis.getVoices() || [];
+  }
+
+  function pickSpeechVoice(lang) {
+    var code = SPEECH_LANG[lang] || SPEECH_LANG.en;
+    var prefix = code.split('-')[0];
+    var i;
+
+    for (i = 0; i < speechVoices.length; i++) {
+      if (speechVoices[i].lang === code) return speechVoices[i];
+    }
+    for (i = 0; i < speechVoices.length; i++) {
+      if (speechVoices[i].lang.indexOf(prefix) === 0 && speechVoices[i].localService) {
+        return speechVoices[i];
+      }
+    }
+    for (i = 0; i < speechVoices.length; i++) {
+      if (speechVoices[i].lang.indexOf(prefix) === 0) return speechVoices[i];
+    }
+    return null;
+  }
+
+  function speak(text) {
+    if (!state.voiceEnabled || !state.speechSupported || !text) return;
+
+    stopSpeech();
+
+    var utterance = new SpeechSynthesisUtterance(text);
+    var lang = getLang();
+    utterance.lang = SPEECH_LANG[lang] || SPEECH_LANG.en;
+    utterance.rate = 0.98;
+    utterance.pitch = 1;
+
+    var voice = pickSpeechVoice(lang);
+    if (voice) utterance.voice = voice;
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function setVoiceEnabled(enabled, persist) {
+    state.voiceEnabled = !!enabled;
+    if (persist !== false) {
+      localStorage.setItem(VOICE_KEY, state.voiceEnabled ? '1' : '0');
+    }
+    if (!state.voiceEnabled) stopSpeech();
+    updateVoiceButton();
+  }
+
+  function updateVoiceButton() {
+    if (!state.voiceBtn) return;
+    var on = state.voiceEnabled;
+    state.voiceBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    state.voiceBtn.setAttribute('aria-label', t(on ? 'ai.voiceOnLabel' : 'ai.voiceOffLabel'));
+    state.voiceBtn.title = t(on ? 'ai.voiceOnLabel' : 'ai.voiceOffLabel');
+  }
+
+  function initVoice() {
+    state.speechSupported = typeof window !== 'undefined' &&
+      'speechSynthesis' in window &&
+      'SpeechSynthesisUtterance' in window;
+
+    var stored = localStorage.getItem(VOICE_KEY);
+    state.voiceEnabled = stored === null ? true : stored === '1';
+
+    state.voiceBtn = document.getElementById('ai-core-voice');
+    if (!state.voiceBtn) return;
+
+    if (!state.speechSupported) {
+      state.voiceBtn.hidden = true;
+      return;
+    }
+
+    updateVoiceButton();
+    refreshSpeechVoices();
+
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = refreshSpeechVoices;
+    }
+
+    state.voiceBtn.addEventListener('click', function () {
+      setVoiceEnabled(!state.voiceEnabled);
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stopSpeech();
+    });
   }
 
   function sayUser(text) {
@@ -282,6 +390,7 @@
       state.tourTimer = null;
     }
     state.tourIndex = 0;
+    stopSpeech();
   }
 
   function openSection(sec, userText) {
@@ -409,14 +518,32 @@
     if (state.inputEl) {
       state.inputEl.placeholder = t('ai.placeholder');
     }
+    updateVoiceButton();
     buildChips();
   }
 
   function isLightTheme() {
-    var theme = document.documentElement.getAttribute('data-theme');
-    if (theme === 'light') return true;
-    if (theme === 'dark') return false;
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    return window.HLS && window.HLS.isLightTheme ? window.HLS.isLightTheme() : false;
+  }
+
+  var LIGHTNING_DARK = [
+    'rgba(26, 170, 17, 0.95)',
+    'rgba(0, 220, 255, 0.9)',
+    'rgba(255, 60, 220, 0.88)',
+    'rgba(255, 220, 40, 0.92)',
+    'rgba(120, 80, 255, 0.9)'
+  ];
+
+  var LIGHTNING_LIGHT = [
+    'rgba(18, 138, 12, 0.82)',
+    'rgba(30, 64, 175, 0.78)',
+    'rgba(122, 44, 255, 0.72)',
+    'rgba(180, 120, 0, 0.75)',
+    'rgba(0, 140, 120, 0.78)'
+  ];
+
+  function lightningColors() {
+    return isLightTheme() ? LIGHTNING_LIGHT : LIGHTNING_DARK;
   }
 
   var lightningDispose = null;
@@ -426,7 +553,7 @@
       lightningDispose();
       lightningDispose = null;
     }
-    if (isLightTheme() || state.reducedMotion) return;
+    if (state.reducedMotion) return;
     var canvas = document.getElementById('hero-lightning');
     if (!canvas) return;
 
@@ -437,14 +564,7 @@
     var sparks = [];
     var raf = 0;
     var lastFlash = 0;
-
-    var COLORS = [
-      'rgba(26, 170, 17, 0.95)',
-      'rgba(0, 220, 255, 0.9)',
-      'rgba(255, 60, 220, 0.88)',
-      'rgba(255, 220, 40, 0.92)',
-      'rgba(120, 80, 255, 0.9)'
-    ];
+    var COLORS = lightningColors();
 
     function resize() {
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -601,6 +721,7 @@
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     state.lastLang = getLang();
 
+    initVoice();
     initLightning();
     initChat();
     window.addEventListener('hls:theme-applied', initLightning);

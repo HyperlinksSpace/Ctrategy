@@ -40,6 +40,11 @@
       if (dict[key]) el.placeholder = dict[key];
     });
 
+    document.querySelectorAll('[data-i18n-svg]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n-svg');
+      if (dict[key]) el.textContent = dict[key];
+    });
+
     document.querySelectorAll('.lang-btn').forEach(function (btn) {
       btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
     });
@@ -75,9 +80,11 @@
     });
 
     if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+      var onSystemSchemeChange = function () {
         if (getTheme() === 'system') applyTheme('system', false);
-      });
+      };
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onSystemSchemeChange);
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', onSystemSchemeChange);
     }
   }
 
@@ -178,27 +185,6 @@
     window.addEventListener('hls:locale-change', scheduleLayout);
 
     scheduleLayout();
-  }
-
-  function initScrollReveal() {
-    var sections = document.querySelectorAll('.section, .hero-content, .hero-visual');
-    sections.forEach(function (el) { el.classList.add('reveal'); });
-
-    if (!('IntersectionObserver' in window)) {
-      sections.forEach(function (el) { el.classList.add('visible'); });
-      return;
-    }
-
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
-
-    sections.forEach(function (el) { observer.observe(el); });
   }
 
   function initSectionSpy() {
@@ -306,7 +292,6 @@
     initResponsiveNav();
     initHeaderMenu();
     initSectionSpy();
-    initScrollReveal();
     initHeaderShadow();
   });
 })();

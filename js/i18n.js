@@ -190,7 +190,9 @@ window.HLS_I18N = {
     'ai.tourDone': 'Tour complete. You\'ve seen the full $1T arc — from bootstrap to interplanetary monopoly. Ask me anything anytime.',
     'ai.tourStop': 'Tour paused. Pick a section chip or ask me directly.',
     'ai.langSwitch': 'Language switched — I\'ll keep guiding you in your chosen language.',
-    'ai.thanks': 'Anytime. Where should we go next?'
+    'ai.thanks': 'Anytime. Where should we go next?',
+    'ai.voiceOnLabel': 'Turn voice off',
+    'ai.voiceOffLabel': 'Turn voice on'
   },
 
   ru: {
@@ -384,7 +386,9 @@ window.HLS_I18N = {
     'ai.tourDone': 'Тур завершён. Вы увидели полную дугу $1T — от bootstrap до межпланетной монополии.',
     'ai.tourStop': 'Тур на паузе. Выберите чип или спросите напрямую.',
     'ai.langSwitch': 'Язык переключён — продолжу на вашем языке.',
-    'ai.thanks': 'Всегда пожалуйста. Куда дальше?'
+    'ai.thanks': 'Всегда пожалуйста. Куда дальше?',
+    'ai.voiceOnLabel': 'Выключить голос',
+    'ai.voiceOffLabel': 'Включить голос'
   },
 
   zh: {
@@ -578,6 +582,8 @@ window.HLS_I18N = {
     'ai.tourDone': '导览完成。你已看完 $1T 全貌 — 从 bootstrap 到星际垄断。',
     'ai.tourStop': '导览已暂停。选择芯片或直接提问。',
     'ai.langSwitch': '语言已切换 — 我会继续用你的语言引导。',
-    'ai.thanks': '随时为你效劳。接下来去哪里？'
+    'ai.thanks': '随时为你效劳。接下来去哪里？',
+    'ai.voiceOnLabel': '关闭语音',
+    'ai.voiceOffLabel': '开启语音'
   }
 };
