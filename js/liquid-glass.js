@@ -70,52 +70,7 @@
   function syncHeaderChroma() {
     var header = document.querySelector('.site-header.liquid-glass-host');
     if (!header) return;
-
-    var over = headerOverHero();
-    header.classList.toggle('header-over-hero', over);
-    if (!over) return;
-
-    var heroCanvas = document.getElementById('hero-orb');
-    var chromaWrap = header.querySelector('.liquid-glass-chroma');
-    var canvas = chromaWrap && chromaWrap.querySelector('canvas');
-    if (!heroCanvas || !canvas || heroCanvas.width < 2) return;
-
-    var q = getQuality();
-    if (q.lite) return;
-
-    var rect = header.getBoundingClientRect();
-    var heroRect = heroCanvas.getBoundingClientRect();
-    if (heroRect.width < 1 || heroRect.height < 1) return;
-
-    var dpr = Math.min(window.devicePixelRatio || 1, 1.25);
-    var cw = Math.max(1, Math.round(rect.width * dpr));
-    var ch = Math.max(1, Math.round(rect.height * dpr));
-    if (canvas.width !== cw || canvas.height !== ch) {
-      canvas.width = cw;
-      canvas.height = ch;
-    }
-
-    var scaleX = heroCanvas.width / heroRect.width;
-    var scaleY = heroCanvas.height / heroRect.height;
-    var sx = (rect.left - heroRect.left) * scaleX;
-    var sy = (rect.top - heroRect.top) * scaleY;
-    var sw = rect.width * scaleX;
-    var sh = rect.height * scaleY;
-
-    var ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.clearRect(0, 0, cw, ch);
-    ctx.drawImage(heroCanvas, sx, sy, sw, sh, 0, 0, cw, ch);
-
-    ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = 0.28;
-    ctx.drawImage(heroCanvas, sx + 1.5 * dpr, sy, sw, sh, 1.5 * dpr, 0, cw, ch);
-    ctx.globalAlpha = 0.24;
-    ctx.drawImage(heroCanvas, sx - 1.5 * dpr, sy, sw, sh, -1.5 * dpr, 0, cw, ch);
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
+    header.classList.toggle('header-over-hero', headerOverHero());
   }
 
   function syncHeaderChromaJob() {

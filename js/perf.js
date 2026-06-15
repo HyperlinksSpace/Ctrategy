@@ -62,23 +62,22 @@
       coarse: coarse,
       lite: lite,
       reduced: reduced,
-      dpr: lite ? 1 : Math.min(window.devicePixelRatio || 1, 1.25),
+      dpr: lite ? 1 : Math.min(window.devicePixelRatio || 1, 2),
       orbSteps: lite ? 24 : 36,
-      orbMaxPx: lite ? 480 : 720,
+      orbMaxPx: lite ? 640 : 1280,
       orbBlobs: lite ? 3 : 4,
       orbFrameSkip: (lite ? 2 : 1) + adaptive.boost,
       bgFrameSkip: lite ? 3 : 2,
       fbmOctaves: lite ? 2 : 3,
       lightning: !lite && !reduced,
       bgWebgl: false,
-      blurBars: false,,
-      threeSphereSeg: lite ? 48 : 96,
-      threeInnerSeg: lite ? 32 : 48,
-      threeChainCount: lite ? 0 : (mobile ? 16 : 32),
-      threeTubeSeg: lite ? 16 : 32,
-      threeRingSeg: lite ? 12 : 24,
-      threeBolts: lite || reduced ? 0 : (mobile ? 3 : 5),
-      threeBottomChains: !lite && !mobile
+      blurBars: false,
+      threeSphereSeg: lite ? 64 : 128,
+      threeInnerSeg: lite ? 32 : 64,
+      threeChainCount: lite ? 12 : (mobile ? 24 : 48),
+      threeTubeSeg: lite ? 24 : 56,
+      threeRingSeg: lite ? 16 : 48,
+      threeBottomChains: !lite
     };
   }
 

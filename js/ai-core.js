@@ -1279,8 +1279,6 @@
     }
     if (state.reducedMotion) return;
 
-    if (window.HLS && window.HLS.heroThreeActive) return;
-
     var quality = window.HLS && window.HLS.getQuality ? window.HLS.getQuality() : { lightning: true };
     if (!quality.lightning) return;
 
@@ -1316,8 +1314,10 @@
     function randomBolt() {
       var w = canvas.clientWidth;
       var h = canvas.clientHeight;
-      var sx = Math.random() * w;
-      var sy = Math.random() * h * 0.35;
+      var cx = w * 0.5;
+      var cy = h * 0.48;
+      var sx = cx + (Math.random() - 0.5) * w * 0.22;
+      var sy = cy + (Math.random() - 0.5) * h * 0.16;
       var points = [{ x: sx, y: sy }];
       var x = sx;
       var y = sy;
@@ -1465,6 +1465,7 @@
     initSectionNavBridge();
     initChat();
     window.addEventListener('hls:theme-applied', initLightning);
+    window.addEventListener('hls:hero-scene-ready', initLightning);
   }
 
   if (document.readyState === 'loading') {
