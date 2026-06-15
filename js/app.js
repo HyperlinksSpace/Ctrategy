@@ -4,6 +4,7 @@
   var LANG_KEY = 'hls-lang';
   var THEME_KEY = 'hls-theme';
   var SUPPORTED_LANGS = { en: true, ru: true, zh: true };
+  var MOBILE_BP = 768;
 
   function detectSystemLang() {
     var list = navigator.languages && navigator.languages.length
@@ -39,6 +40,7 @@
     });
 
     if (persist) localStorage.setItem(LANG_KEY, lang);
+    window.dispatchEvent(new Event('hls:locale-change'));
   }
 
   function applyTheme(theme, persist) {
@@ -73,30 +75,103 @@
     }
   }
 
-  function closeMobileDrawer() {
-    var drawer = document.getElementById('header-drawer');
+  function closeHeaderPanel() {
+    var panel = document.getElementById('header-panel');
     var toggle = document.querySelector('.menu-toggle');
-    if (drawer) drawer.classList.remove('open');
+    if (panel) panel.classList.remove('open');
     if (toggle) toggle.setAttribute('aria-expanded', 'false');
   }
 
-  function initMobileMenu() {
+  function initHeaderMenu() {
     var toggle = document.querySelector('.menu-toggle');
-    var drawer = document.getElementById('header-drawer');
-    if (!toggle || !drawer) return;
+    var panel = document.getElementById('header-panel');
+    if (!toggle || !panel) return;
 
     toggle.addEventListener('click', function () {
-      var open = drawer.classList.toggle('open');
+      var open = panel.classList.toggle('open');
       toggle.setAttribute('aria-expanded', open);
     });
 
-    drawer.querySelectorAll('a, .theme-btn').forEach(function (el) {
-      el.addEventListener('click', closeMobileDrawer);
+    panel.querySelectorAll('a, .theme-btn, .lang-btn').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (el.tagName === 'A' || el.classList.contains('theme-btn')) {
+          closeHeaderPanel();
+        }
+      });
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeMobileDrawer();
+      if (e.key === 'Escape') closeHeaderPanel();
     });
+
+    document.addEventListener('click', function (e) {
+      if (!panel.classList.contains('open')) return;
+      var header = document.querySelector('.site-header');
+      if (header && !header.contains(e.target)) closeHeaderPanel();
+    });
+  }
+
+  function initResponsiveNav() {
+    var header = document.querySelector('.site-header');
+    var primary = document.getElementById('nav-primary');
+    var panelNav = document.getElementById('nav-panel');
+    var toggle = document.querySelector('.menu-toggle');
+    if (!header || !primary || !panelNav || !toggle) return;
+
+    var mobileMq = window.matchMedia('(max-width: ' + MOBILE_BP + 'px)');
+    var layoutTimer;
+
+    function moveAllToPrimary() {
+      while (panelNav.firstChild) {
+        primary.appendChild(panelNav.firstChild);
+      }
+    }
+
+    function moveAllToPanel() {
+      while (primary.firstChild) {
+        panelNav.appendChild(primary.firstChild);
+      }
+    }
+
+    function layoutNav() {
+      closeHeaderPanel();
+
+      if (mobileMq.matches) {
+        moveAllToPanel();
+        toggle.hidden = false;
+        return;
+      }
+
+      moveAllToPrimary();
+      toggle.hidden = true;
+
+      var guard = primary.children.length + 1;
+      while (guard-- > 0 && primary.scrollWidth > primary.clientWidth && primary.lastElementChild) {
+        panelNav.appendChild(primary.lastElementChild);
+        toggle.hidden = false;
+      }
+    }
+
+    function scheduleLayout() {
+      clearTimeout(layoutTimer);
+      layoutTimer = setTimeout(layoutNav, 60);
+    }
+
+    window.addEventListener('resize', scheduleLayout);
+    if (mobileMq.addEventListener) {
+      mobileMq.addEventListener('change', scheduleLayout);
+    } else if (mobileMq.addListener) {
+      mobileMq.addListener(scheduleLayout);
+    }
+
+    if (window.ResizeObserver) {
+      new ResizeObserver(scheduleLayout).observe(header);
+      new ResizeObserver(scheduleLayout).observe(primary);
+    }
+
+    window.addEventListener('hls:locale-change', scheduleLayout);
+
+    scheduleLayout();
   }
 
   function initScrollReveal() {
@@ -134,7 +209,8 @@
     applyTheme(getTheme(), false);
     initLangSwitch();
     initThemeSwitch();
-    initMobileMenu();
+    initResponsiveNav();
+    initHeaderMenu();
     initScrollReveal();
     initHeaderShadow();
   });
