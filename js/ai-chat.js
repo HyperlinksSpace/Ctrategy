@@ -5,6 +5,7 @@
   'use strict';
 
   var history = [];
+  var activeController = null;
 
   function resolveEndpoint(config) {
     if (config.preferSameOrigin && typeof window !== 'undefined') {
@@ -63,7 +64,11 @@
     return { ok: true, text: text };
   }
 
-  function askHsp(input, lang) {
+  function isAbortError(err) {
+    return !!(err && (err.name === 'AbortError' || err.code === 20));
+  }
+
+  function askHsp(input, lang, signal) {
     var config = getConfig();
     var payload = {
       input: formatHistoryBlock() + 'user: ' + input,
@@ -81,7 +86,8 @@
     return fetch(config.endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: signal
     })
       .then(function (res) {
         return res.text().then(function (raw) {
@@ -94,12 +100,15 @@
           return parseHspResponse(res, body);
         });
       })
-      .catch(function () {
+      .catch(function (err) {
+        if (isAbortError(err)) {
+          return { ok: false, error: 'aborted' };
+        }
         return { ok: false, error: 'network' };
       });
   }
 
-  function askOpenAi(input, lang) {
+  function askOpenAi(input, lang, signal) {
     var config = getConfig();
     var messages = [];
     var instructions = getInstructions(lang);
@@ -124,7 +133,8 @@
         messages: messages,
         temperature: 0.7,
         max_tokens: 800
-      })
+      }),
+      signal: signal
     })
       .then(function (res) {
         return res.json().then(function (body) {
@@ -141,7 +151,10 @@
           return { ok: true, text: text };
         });
       })
-      .catch(function () {
+      .catch(function (err) {
+        if (isAbortError(err)) {
+          return { ok: false, error: 'aborted' };
+        }
         return { ok: false, error: 'network' };
       });
   }
@@ -156,11 +169,18 @@
       return Promise.resolve({ ok: false, error: 'disabled' });
     }
 
+    if (activeController) {
+      activeController.abort();
+    }
+    activeController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var signal = activeController ? activeController.signal : undefined;
+
     var request = config.format === 'openai'
-      ? askOpenAi(text, lang)
-      : askHsp(text, lang);
+      ? askOpenAi(text, lang, signal)
+      : askHsp(text, lang, signal);
 
     return request.then(function (result) {
+      activeController = null;
       if (result.ok && result.text) {
         history.push({ role: 'user', content: text });
         history.push({ role: 'assistant', content: result.text });
@@ -170,6 +190,13 @@
     });
   }
 
+  function cancel() {
+    if (activeController) {
+      activeController.abort();
+      activeController = null;
+    }
+  }
+
   function clearHistory() {
     history = [];
   }
@@ -177,6 +204,7 @@
   window.HLS = window.HLS || {};
   window.HLS.aiChat = {
     ask: ask,
+    cancel: cancel,
     clearHistory: clearHistory,
     isEnabled: function () {
       var config = getConfig();

@@ -119,9 +119,12 @@
     chipsEl: null,
     inputEl: null,
     formEl: null,
+    stopBtn: null,
     voiceBtn: null,
     micBtn: null,
     typing: false,
+    typingTimer: null,
+    typingBubble: null,
     tourTimer: null,
     tourIndex: 0,
     reducedMotion: false,
@@ -272,6 +275,51 @@
     if (!state.typing && !state.speaking) releaseOrbIdle(350);
   }
 
+  function isGenerating() {
+    return state.aiPending || state.typing;
+  }
+
+  function setGeneratingUI(active) {
+    if (!state.formEl) return;
+    if (active == null) active = isGenerating();
+    state.formEl.classList.toggle('is-generating', active);
+    if (state.stopBtn) {
+      state.stopBtn.setAttribute('aria-label', t('ai.stop'));
+      state.stopBtn.title = t('ai.stop');
+    }
+  }
+
+  function cancelTyping() {
+    if (state.typingTimer) {
+      clearTimeout(state.typingTimer);
+      state.typingTimer = null;
+    }
+    if (state.typingBubble) {
+      state.typingBubble.classList.remove('ai-core-msg--typing');
+      if (!state.typingBubble.textContent) {
+        state.typingBubble.remove();
+      }
+      state.typingBubble = null;
+    }
+    state.typing = false;
+  }
+
+  function cancelGeneration() {
+    var wasActive = isGenerating();
+    if (state.aiPending) {
+      if (window.HLS.aiChat && window.HLS.aiChat.cancel) {
+        window.HLS.aiChat.cancel();
+      }
+      hideThinking();
+      state.aiPending = false;
+    }
+    if (state.typing) {
+      cancelTyping();
+    }
+    setGeneratingUI(false);
+    if (wasActive) releaseOrbIdle(350);
+  }
+
   function askGeneral(raw) {
     if (state.aiPending || state.typing) return;
 
@@ -282,10 +330,16 @@
 
     state.aiPending = true;
     showThinking();
+    setGeneratingUI(true);
 
     window.HLS.aiChat.ask(raw, getLang()).then(function (result) {
       hideThinking();
       state.aiPending = false;
+      setGeneratingUI(false);
+
+      if (result.error === 'aborted') {
+        return;
+      }
 
       if (result.ok && result.text) {
         showBotMessage(result.text, {
@@ -304,6 +358,7 @@
     }).catch(function () {
       hideThinking();
       state.aiPending = false;
+      setGeneratingUI(false);
       sayBot('ai.apiError');
     });
   }
@@ -954,23 +1009,29 @@
     }
 
     state.typing = true;
+    setGeneratingUI(true);
     emitOrb('typing');
     var bubble = document.createElement('div');
     bubble.className = 'ai-core-msg ai-core-msg--bot ai-core-msg--typing';
     state.messagesEl.appendChild(bubble);
+    state.typingBubble = bubble;
 
     var i = 0;
     var speed = 14;
 
     function tick() {
+      if (!state.typing || state.typingBubble !== bubble) return;
       bubble.textContent = text.slice(0, i);
       state.messagesEl.scrollTop = state.messagesEl.scrollHeight;
       i += 1;
       if (i <= text.length) {
-        setTimeout(tick, speed);
+        state.typingTimer = setTimeout(tick, speed);
       } else {
+        state.typingTimer = null;
+        state.typingBubble = null;
         bubble.classList.remove('ai-core-msg--typing');
         state.typing = false;
+        setGeneratingUI(false);
         if (done) done();
       }
     }
@@ -1702,7 +1763,7 @@
 
   function handleInput(raw) {
     var text = normalize(raw);
-    if (!text || state.typing) return;
+    if (!text || state.typing || state.aiPending) return;
     if (state.tourActive && state.speaking) return;
 
     stopTour();
@@ -2045,10 +2106,17 @@
     state.chipsEl = document.getElementById('ai-core-chips');
     state.inputEl = document.getElementById('ai-core-input');
     state.formEl = document.getElementById('ai-core-form');
+    state.stopBtn = document.getElementById('ai-core-stop');
 
     if (!state.messagesEl || !state.formEl) return;
 
     buildChips();
+
+    if (state.stopBtn) {
+      state.stopBtn.addEventListener('click', function () {
+        cancelGeneration();
+      });
+    }
 
     state.formEl.addEventListener('submit', function (e) {
       e.preventDefault();
