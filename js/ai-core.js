@@ -1279,6 +1279,8 @@
     }
     if (state.reducedMotion) return;
 
+    if (window.HLS && window.HLS.heroThreeActive) return;
+
     var quality = window.HLS && window.HLS.getQuality ? window.HLS.getQuality() : { lightning: true };
     if (!quality.lightning) return;
 
