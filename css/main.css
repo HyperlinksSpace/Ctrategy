@@ -142,14 +142,45 @@ body {
   align-items: center;
   gap: 0.75rem;
   text-decoration: none;
-  color: var(--text-primary);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
-.logo-mark { width: 32px; height: 32px; color: var(--accent-cyan); }
+.logo-full,
+.logo-mark {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+
+.logo-full-light { display: none; }
+
+.logo-mark {
+  display: none;
+  width: 32px;
+  height: 32px;
+}
+
+[data-theme="light"] .logo-full-dark { display: none; }
+[data-theme="light"] .logo-full-light { display: block; }
+
+[data-theme="dark"] .logo-full-light { display: none; }
+[data-theme="dark"] .logo-full-dark { display: block; }
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] .logo-full-dark { display: none; }
+  [data-theme="system"] .logo-full-light { display: block; }
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .logo-full-light { display: none; }
+  [data-theme="system"] .logo-full-dark { display: block; }
+}
+
+@media (max-width: 768px) {
+  .logo-full { display: none !important; }
+  .logo-mark { display: block; }
+}
 
 .nav-main {
   display: flex;
@@ -873,12 +904,6 @@ main { position: relative; z-index: 1; }
   .logo {
     grid-area: logo;
     min-width: 0;
-  }
-
-  .logo span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .lang-switch-bar {
