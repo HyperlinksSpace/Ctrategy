@@ -77,9 +77,9 @@
       nameKey: 'nav.northStar',
       descKey: 'north.title',
       words: {
-        en: ['north', 'star', 'future', 'founder', 'yacht', '2040', 'outcome'],
-        ru: ['поляр', 'звезд', 'будущ', 'основат', '2040', 'yacht'],
-        zh: ['北极星', '未来', '创始人', '2040', '游艇']
+        en: ['north', 'star', 'future', 'mission', '2040', 'trillion', 'infrastructure'],
+        ru: ['поляр', 'звезд', 'будущ', 'мисс', '2040', 'триллион'],
+        zh: ['北极星', '未来', '使命', '2040', '万亿']
       }
     }
   ];
@@ -126,6 +126,8 @@
     reducedMotion: false,
     voiceEnabled: true,
     speechSupported: false,
+    speaking: false,
+    speechResolve: null,
     lastLang: null,
     ready: false
   };
@@ -244,9 +246,88 @@
     return bubble;
   }
 
-  function typeBotMessage(text, done) {
-    stopSpeech();
+  function tVoice(key, vars) {
+    var lang = getLang();
+    var dict = window.HLS_I18N[lang] || window.HLS_I18N.en;
+    var voiceKey = key + 'Voice';
+    if (dict[voiceKey]) return t(voiceKey, vars);
+    return t(key, vars);
+  }
 
+  function prepareSpeechText(text) {
+    return String(text)
+      .replace(/\$1T\+?/gi, 'one trillion dollars')
+      .replace(/\$1B/gi, 'one billion dollars')
+      .replace(/\$10M/gi, 'ten million dollars')
+      .replace(/\$2\b/g, 'two dollars')
+      .replace(/→/g, ', then ')
+      .replace(/…/g, '...')
+      .replace(/·/g, ', ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function normalizeVoiceName(name) {
+    return String(name || '').toLowerCase();
+  }
+
+  function pickBestVoice(lang) {
+    var code = SPEECH_LANG[lang] || SPEECH_LANG.en;
+    var prefix = code.split('-')[0];
+    var prefer = {
+      en: [
+        /google.*english.*female/i,
+        /microsoft.*aria/i,
+        /microsoft.*jenny/i,
+        /samantha/i,
+        /karen/i,
+        /victoria/i
+      ],
+      ru: [/google.*russian/i, /milena/i, /irina/i, /pavel/i],
+      zh: [/google.*mandarin/i, /xiaoxiao/i, /ting-?ting/i, /huihui/i, /yaoyao/i]
+    };
+    var patterns = prefer[lang] || prefer.en;
+    var i;
+    var p;
+    var voice;
+
+    refreshSpeechVoices();
+
+    for (p = 0; p < patterns.length; p++) {
+      for (i = 0; i < speechVoices.length; i++) {
+        voice = speechVoices[i];
+        if (voice.lang.indexOf(prefix) !== 0) continue;
+        if (patterns[p].test(normalizeVoiceName(voice.name))) return voice;
+      }
+    }
+
+    for (i = 0; i < speechVoices.length; i++) {
+      if (speechVoices[i].lang === code) return speechVoices[i];
+    }
+    for (i = 0; i < speechVoices.length; i++) {
+      if (speechVoices[i].lang.indexOf(prefix) === 0 && speechVoices[i].localService) {
+        return speechVoices[i];
+      }
+    }
+    for (i = 0; i < speechVoices.length; i++) {
+      if (speechVoices[i].lang.indexOf(prefix) === 0) return speechVoices[i];
+    }
+    return null;
+  }
+
+  function speechRate(lang) {
+    if (lang === 'zh') return 0.9;
+    if (lang === 'ru') return 0.93;
+    return 0.95;
+  }
+
+  function speechPitch(lang) {
+    if (lang === 'en') return 1.06;
+    if (lang === 'ru') return 1.02;
+    return 1.0;
+  }
+
+  function typeBotMessage(text, done) {
     if (state.reducedMotion) {
       appendBubble(text, 'bot');
       if (done) done();
@@ -277,17 +358,50 @@
     tick();
   }
 
+  function showBotMessage(displayText, opts) {
+    opts = opts || {};
+    var speakLine = opts.speak === false ? null : (opts.speakText || displayText);
+
+    if (speakLine && opts.parallelSpeak) {
+      speakAsync(speakLine);
+      speakLine = null;
+    }
+
+    function finish() {
+      if (speakLine) {
+        speakAsync(speakLine).then(function () {
+          if (opts.onDone) opts.onDone();
+        });
+        return;
+      }
+      if (opts.onDone) opts.onDone();
+    }
+
+    if (state.reducedMotion || opts.instant) {
+      appendBubble(displayText, 'bot');
+      finish();
+      return;
+    }
+
+    typeBotMessage(displayText, finish);
+  }
+
   function sayBot(key, vars, done) {
-    var text = t(key, vars);
-    typeBotMessage(text, function () {
-      speak(text);
-      if (done) done();
+    showBotMessage(t(key, vars), {
+      speakText: tVoice(key, vars),
+      parallelSpeak: true,
+      onDone: done
     });
   }
 
   function stopSpeech() {
     if (!state.speechSupported) return;
     window.speechSynthesis.cancel();
+    if (state.speechResolve) {
+      state.speechResolve();
+      state.speechResolve = null;
+    }
+    state.speaking = false;
   }
 
   function refreshSpeechVoices() {
@@ -295,40 +409,43 @@
     speechVoices = window.speechSynthesis.getVoices() || [];
   }
 
-  function pickSpeechVoice(lang) {
-    var code = SPEECH_LANG[lang] || SPEECH_LANG.en;
-    var prefix = code.split('-')[0];
-    var i;
-
-    for (i = 0; i < speechVoices.length; i++) {
-      if (speechVoices[i].lang === code) return speechVoices[i];
-    }
-    for (i = 0; i < speechVoices.length; i++) {
-      if (speechVoices[i].lang.indexOf(prefix) === 0 && speechVoices[i].localService) {
-        return speechVoices[i];
+  function speakAsync(text) {
+    return new Promise(function (resolve) {
+      if (!state.voiceEnabled || !state.speechSupported || !text) {
+        resolve();
+        return;
       }
-    }
-    for (i = 0; i < speechVoices.length; i++) {
-      if (speechVoices[i].lang.indexOf(prefix) === 0) return speechVoices[i];
-    }
-    return null;
-  }
 
-  function speak(text) {
-    if (!state.voiceEnabled || !state.speechSupported || !text) return;
+      stopSpeech();
 
-    stopSpeech();
+      var lang = getLang();
+      var prepared = prepareSpeechText(text);
+      var utterance = new SpeechSynthesisUtterance(prepared);
 
-    var utterance = new SpeechSynthesisUtterance(text);
-    var lang = getLang();
-    utterance.lang = SPEECH_LANG[lang] || SPEECH_LANG.en;
-    utterance.rate = 0.98;
-    utterance.pitch = 1;
+      utterance.lang = SPEECH_LANG[lang] || SPEECH_LANG.en;
+      utterance.rate = speechRate(lang);
+      utterance.pitch = speechPitch(lang);
+      utterance.volume = 1;
 
-    var voice = pickSpeechVoice(lang);
-    if (voice) utterance.voice = voice;
+      var voice = pickBestVoice(lang);
+      if (voice) utterance.voice = voice;
 
-    window.speechSynthesis.speak(utterance);
+      state.speechResolve = resolve;
+      state.speaking = true;
+
+      utterance.onend = function () {
+        state.speaking = false;
+        if (state.speechResolve === resolve) state.speechResolve = null;
+        resolve();
+      };
+      utterance.onerror = function () {
+        state.speaking = false;
+        if (state.speechResolve === resolve) state.speechResolve = null;
+        resolve();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    });
   }
 
   function setVoiceEnabled(enabled, persist) {
@@ -393,38 +510,60 @@
     stopSpeech();
   }
 
-  function openSection(sec, userText) {
-    if (userText) sayUser(userText);
+  function presentSection(sec, opts) {
+    opts = opts || {};
+    stopTour();
+    if (opts.userText) sayUser(opts.userText);
+
     var meta = sectionMeta(sec.id);
-    sayBot('ai.navigating', { name: meta.name }, function () {
-      scrollToSection(sec.id);
-      setTimeout(function () {
-        sayBot('ai.sectionLead', { name: meta.name, desc: meta.desc });
-      }, state.reducedMotion ? 80 : 520);
+    var displayText = t('ai.sectionLead', meta);
+    var voiceText = t('ai.navigatingVoice', { name: meta.name }) + ' ' + t('ai.sectionVoice', meta);
+
+    scrollToSection(sec.id);
+
+    showBotMessage(displayText, {
+      speakText: voiceText,
+      parallelSpeak: true,
+      onDone: opts.onDone
+    });
+  }
+
+  function openSection(sec, userText) {
+    presentSection(sec, { userText: userText });
+  }
+
+  function tourStep() {
+    if (state.tourIndex >= SECTIONS.length) {
+      showBotMessage(t('ai.tourDone'), {
+        speakText: tVoice('ai.tourDone'),
+        parallelSpeak: true
+      });
+      return;
+    }
+
+    var sec = SECTIONS[state.tourIndex];
+    var meta = sectionMeta(sec.id);
+    var displayText = t('ai.sectionLead', meta);
+    var voiceText = t('ai.sectionVoice', meta);
+
+    scrollToSection(sec.id);
+    state.tourIndex += 1;
+
+    showBotMessage(displayText, { speak: false });
+
+    speakAsync(voiceText).then(function () {
+      state.tourTimer = setTimeout(tourStep, state.reducedMotion ? 500 : 900);
     });
   }
 
   function startTour(userText) {
     stopTour();
     if (userText) sayUser(userText);
-    sayBot('ai.tourStart', null, function () {
-      state.tourIndex = 0;
 
-      function step() {
-        if (state.tourIndex >= SECTIONS.length) {
-          sayBot('ai.tourDone');
-          return;
-        }
-        var sec = SECTIONS[state.tourIndex];
-        var meta = sectionMeta(sec.id);
-        scrollToSection(sec.id);
-        sayBot('ai.sectionLead', { name: meta.name, desc: meta.desc });
-        state.tourIndex += 1;
-        state.tourTimer = setTimeout(step, state.reducedMotion ? 1200 : 3400);
-      }
+    state.tourIndex = 0;
+    showBotMessage(t('ai.tourStart'), { speak: false });
 
-      step();
-    });
+    speakAsync(tVoice('ai.tourStart')).then(tourStep);
   }
 
   function handleInput(raw) {
@@ -455,8 +594,11 @@
     if (matchesAny(text, HERE_WORDS[lang] || HERE_WORDS.en)) {
       var hereId = getVisibleSectionId();
       if (hereId) {
-        var meta = sectionMeta(hereId);
-        sayBot('ai.here', { name: meta.name, desc: meta.desc });
+        var hereMeta = sectionMeta(hereId);
+        showBotMessage(t('ai.here', hereMeta), {
+          speakText: tVoice('ai.here', hereMeta),
+          parallelSpeak: true
+        });
       } else {
         sayBot('ai.hereUnknown');
       }
@@ -482,6 +624,32 @@
     sayBot('ai.unknown');
   }
 
+  function sectionFromId(id) {
+    for (var i = 0; i < SECTIONS.length; i++) {
+      if (SECTIONS[i].id === id) return SECTIONS[i];
+    }
+    return null;
+  }
+
+  function initSectionNavBridge() {
+    document.addEventListener('click', function (e) {
+      var link = e.target.closest(
+        '.section-chip[data-section-id], #nav-primary a[href^="#"], #nav-panel a[href^="#"]'
+      );
+      if (!link) return;
+
+      var href = link.getAttribute('href') || '';
+      var id = link.getAttribute('data-section-id') || href.replace(/^#/, '');
+      if (!id || id === 'hero') return;
+
+      var sec = sectionFromId(id);
+      if (!sec) return;
+
+      e.preventDefault();
+      presentSection(sec, { userText: t(sec.nameKey) });
+    });
+  }
+
   function buildChips() {
     if (!state.chipsEl) return;
     state.chipsEl.innerHTML = '';
@@ -501,8 +669,7 @@
 
     SECTIONS.forEach(function (sec) {
       addChip(t(sec.nameKey), function () {
-        stopTour();
-        openSection(sec, t(sec.nameKey));
+        presentSection(sec, { userText: t(sec.nameKey) });
       });
     });
   }
@@ -721,8 +888,15 @@
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     state.lastLang = getLang();
 
+    window.HLS = window.HLS || {};
+    window.HLS.presentSection = function (sectionId) {
+      var sec = sectionFromId(sectionId);
+      if (sec) presentSection(sec);
+    };
+
     initVoice();
     initLightning();
+    initSectionNavBridge();
     initChat();
     window.addEventListener('hls:theme-applied', initLightning);
   }
