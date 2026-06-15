@@ -170,8 +170,19 @@
           </form>
         </div>
         <div class="ai-orb-zone" aria-hidden="true">
+          <div class="orb-stage-fx" aria-hidden="true">
+            <div class="orb-nebula"></div>
+            <div class="orb-grid-perspective"></div>
+            <div class="orb-orbit-rings">
+              <span class="orb-ring orb-ring--1"></span>
+              <span class="orb-ring orb-ring--2"></span>
+              <span class="orb-ring orb-ring--3"></span>
+            </div>
+            <canvas id="orb-stars" class="orb-stars-canvas" aria-hidden="true"></canvas>
+          </div>
           <canvas id="hero-orb" class="hero-orb-canvas" aria-hidden="true"></canvas>
           <canvas id="hero-lightning" class="hero-lightning-canvas" aria-hidden="true"></canvas>
+          <div class="orb-core-glow" aria-hidden="true"></div>
           <div class="ai-orb-halo"></div>
         </div>
         </div>
@@ -648,7 +659,9 @@
   <script src="js/nav-dd-content.js"></script>
   <script src="js/theme.js"></script>
   <script src="js/perf.js"></script>
+  <script src="js/orb-reactive.js"></script>
   <script src="js/scene.js"></script>
+  <script src="js/orb-fx.js"></script>
   <script src="js/liquid-glass.js"></script>
   <script src="js/nav-dropdowns.js"></script>
   <script src="js/ai-chat.js"></script>

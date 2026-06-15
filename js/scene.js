@@ -234,6 +234,17 @@
     return window.HLS && window.HLS.shouldAnimateHero ? window.HLS.shouldAnimateHero() : !document.hidden;
   }
 
+  function boundsForCanvas(w, h) {
+    var aspect = w / Math.max(h, 1);
+    if (aspect < 1.4 || w < 420) {
+      return { cx: 0, cy: -0.28, cz: 0, r: 1.02, tight: true };
+    }
+    if (aspect < 1.85) {
+      return { cx: 0, cy: -0.38, cz: 0, r: 1.35, tight: false };
+    }
+    return { cx: 0, cy: -0.5, cz: 0, r: 1.78, tight: false };
+  }
+
   function createHeroScene(deps, canvas) {
     var THREE = deps.THREE;
     var RoomEnvironment = deps.RoomEnvironment;
@@ -242,7 +253,8 @@
     var raf = 0;
     var frame = 0;
     var start = performance.now();
-    var center = new THREE.Vector3(SCENE_BOUNDS.cx, SCENE_BOUNDS.cy, SCENE_BOUNDS.cz);
+    var bounds = boundsForCanvas(canvas.clientWidth, canvas.clientHeight);
+    var center = new THREE.Vector3(bounds.cx, bounds.cy, bounds.cz);
 
     var renderer = new THREE.WebGLRenderer({
       canvas: canvas,
@@ -254,7 +266,7 @@
     renderer.setPixelRatio(1);
     renderer.setClearColor(0x000000, 0);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.22;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     var scene = new THREE.Scene();
@@ -329,7 +341,55 @@
     inner.scale.setScalar(0.75);
     content.add(inner);
 
-    var chainCount = q.threeChainCount || 0;
+    var starCount = q.lite ? 500 : 1400;
+    var starPos = new Float32Array(starCount * 3);
+    var starCol = new Float32Array(starCount * 3);
+    var si;
+    for (si = 0; si < starCount; si++) {
+      var th = Math.random() * Math.PI * 2;
+      var ph = Math.acos(2 * Math.random() - 1);
+      var rad = 2.2 + Math.random() * 7.5;
+      starPos[si * 3] = rad * Math.sin(ph) * Math.cos(th);
+      starPos[si * 3 + 1] = rad * Math.sin(ph) * Math.sin(th);
+      starPos[si * 3 + 2] = rad * Math.cos(ph);
+      starCol[si * 3] = 0.55 + Math.random() * 0.35;
+      starCol[si * 3 + 1] = 0.65 + Math.random() * 0.3;
+      starCol[si * 3 + 2] = 1;
+    }
+    var starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    starGeo.setAttribute('color', new THREE.BufferAttribute(starCol, 3));
+    var stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+      size: q.lite ? 0.018 : 0.026,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    }));
+    content.add(stars);
+
+    var ringMeshes = [];
+    var ri;
+    for (ri = 0; ri < ringRadii.length; ri++) {
+      var orbit = new THREE.Mesh(
+        new THREE.TorusGeometry(ringRadii[ri], 0.006, 8, q.lite ? 64 : 128),
+        new THREE.MeshBasicMaterial({
+          color: ri === 0 ? 0x4a6cf7 : (ri === 1 ? 0x7a2cff : 0x1aaa11),
+          transparent: true,
+          opacity: 0.28 - ri * 0.05,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        })
+      );
+      orbit.rotation.x = Math.PI * 0.5 + ri * 0.12;
+      orbit.rotation.z = ri * 0.35;
+      orbit.userData.ringIdx = ri;
+      ringMeshes.push(orbit);
+      content.add(orbit);
+    }
+
+    var chainCount = bounds.tight ? Math.min(q.threeChainCount || 0, 16) : (q.threeChainCount || 0);
     var layout = chainCount > 0 ? buildGalaxyLayout(chainCount) : [];
     var chains = [];
     var tubeSeg = q.threeTubeSeg || 56;
@@ -357,7 +417,7 @@
     content.add(chainGroup);
 
     var bottomRefs = [];
-    if (q.threeBottomChains !== false && !q.lite) {
+    if (q.threeBottomChains !== false && !q.lite && !bounds.tight) {
       var bottom = new THREE.Group();
       bottom.position.y = BOTTOM_Y;
       for (li = 0; li < 3; li++) {
@@ -372,7 +432,7 @@
     }
 
     var corners = [];
-    var r = SCENE_BOUNDS.r;
+    var r = bounds.r;
     var ci;
     for (ci = 0; ci < 8; ci++) {
       corners.push(new THREE.Vector3(
@@ -389,15 +449,16 @@
     function fitCamera() {
       var dir = new THREE.Vector3(4, -4, 3).normalize();
       var halfRad = (camera.fov * Math.PI) / 360;
-      var dist = (SCENE_BOUNDS.r * 0.82) / Math.tan(halfRad);
+      var dist = (bounds.r * 0.88) / Math.tan(halfRad);
       camera.position.copy(center).add(dir.multiplyScalar(dist));
       camera.lookAt(center);
     }
 
     function fitScale() {
-      projMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+      camera.updateMatrixWorld(true);
+      projMat.copy(camera.projectionMatrix).multiply(camera.matrixWorldInverse);
       var lo = 0.12;
-      var hi = 22;
+      var hi = bounds.tight ? 14 : 22;
       var mid, ok, iter, scaled, c;
       for (iter = 0; iter < 28; iter++) {
         mid = (lo + hi) * 0.5;
@@ -421,8 +482,64 @@
       content.position.set(-center.x, -center.y, -center.z);
     }
 
-    function animateChains(t) {
+    function getReactive() {
+      return window.HLS && window.HLS.getOrbReactive ? window.HLS.getOrbReactive() : {
+        intensity: 0.14, hue: 220, pulse: 0.32, speed: 1, mode: 'idle', speakingPhase: 0
+      };
+    }
+
+    function applyReactiveVisuals(t, rx) {
+      var energy = rx.intensity;
+      var speedMul = rx.speed || 1;
+      var pulse = rx.pulse || 0.3;
+      var speakWave = rx.mode === 'speaking' ? Math.sin(rx.speakingPhase || t * 3) * 0.5 + 0.5 : 0;
+
+      sphereUniforms.uSpeed.value = (0.28 + energy * 0.55) * speedMul;
+      sphereUniforms.uDisplacement.value = 0.28 + energy * 0.14 + speakWave * 0.06;
+      sphereUniforms.uEmission.value = 3.0 + energy * 2.8 + speakWave * 1.2;
+      innerUniforms.uSpeed.value = (0.15 + energy * 0.35) * speedMul;
+
+      ptCore.intensity = 2.5 + energy * 2.4 + speakWave * 1.5;
+      ptBlue.intensity = 0.8 + energy * 1.1;
+      ptDeep.intensity = 0.5 + energy * 0.6;
+
+      var hue = (rx.hue || 220) / 360;
+      ptCore.color.setHSL(hue, 0.72, 0.52);
+      ptBlue.color.setHSL((hue + 0.08) % 1, 0.65, 0.5);
+
+      stars.material.opacity = 0.55 + energy * 0.35;
+      stars.material.size = (q.lite ? 0.018 : 0.026) * (1 + energy * 0.35);
+
+      var ringHue = hue;
+      var ri2;
+      for (ri2 = 0; ri2 < ringMeshes.length; ri2++) {
+        ringMeshes[ri2].material.opacity = (0.28 - ri2 * 0.05) + energy * 0.22;
+        ringMeshes[ri2].material.color.setHSL((ringHue + ri2 * 0.06) % 1, 0.75, 0.55);
+      }
+
+      content.rotation.y = Math.sin(t * 0.12 * speedMul) * 0.04 * energy;
+      outer.scale.setScalar(1 + speakWave * 0.035 + energy * 0.02);
+      inner.scale.setScalar(0.75 + speakWave * 0.04 + energy * 0.015);
+    }
+
+    function animateExtras(t, rx) {
+      var i;
+      var speedMul = (rx && rx.speed) || 1;
+      var energy = (rx && rx.intensity) || 0.14;
+      for (i = 0; i < content.children.length; i++) {
+        var child = content.children[i];
+        if (child.userData && child.userData.ringIdx !== undefined) {
+          child.rotation.y = t * (0.08 + child.userData.ringIdx * 0.04) * speedMul;
+          child.rotation.x = Math.PI * 0.5 + child.userData.ringIdx * 0.12 +
+            Math.sin(t * 0.3 * speedMul + child.userData.ringIdx) * (0.06 + energy * 0.05);
+        }
+      }
+    }
+
+    function animateChains(t, rx) {
       var i, mesh, b, s1, s2, s3;
+      var amp = FLOAT_AMP * (1 + ((rx && rx.intensity) || 0.14) * 1.8);
+      var tumble = TUMBLE_SPEED * ((rx && rx.speed) || 1);
       for (i = 0; i < chains.length; i++) {
         mesh = chains[i];
         b = mesh.userData;
@@ -430,14 +547,14 @@
         s2 = seed(b.idx * 11 + 100);
         s3 = seed(b.idx * 13 + 200);
         mesh.position.set(
-          b.x + FLOAT_AMP * Math.sin(t * FLOAT_SPEED + s1 * 20) * (0.8 + s2 * 0.4),
-          b.y + FLOAT_AMP * Math.sin(t * FLOAT_SPEED * 0.7 + s2 * 20) * (0.8 + s3 * 0.4),
-          b.z + FLOAT_AMP * Math.sin(t * FLOAT_SPEED * 0.5 + s3 * 20) * (0.8 + s1 * 0.4)
+          b.x + amp * Math.sin(t * FLOAT_SPEED + s1 * 20) * (0.8 + s2 * 0.4),
+          b.y + amp * Math.sin(t * FLOAT_SPEED * 0.7 + s2 * 20) * (0.8 + s3 * 0.4),
+          b.z + amp * Math.sin(t * FLOAT_SPEED * 0.5 + s3 * 20) * (0.8 + s1 * 0.4)
         );
         mesh.rotation.set(
-          b.rx + Math.sin(t * TUMBLE_SPEED + s1 * 10) * 0.08,
-          b.ry + Math.sin(t * TUMBLE_SPEED * 0.8 + s2 * 10) * 0.06,
-          b.rz + t * 0.02 * (s3 - 0.5)
+          b.rx + Math.sin(t * tumble + s1 * 10) * 0.08,
+          b.ry + Math.sin(t * tumble * 0.8 + s2 * 10) * 0.06,
+          b.rz + t * 0.02 * (s3 - 0.5) * ((rx && rx.speed) || 1)
         );
       }
       for (i = 0; i < bottomRefs.length; i++) {
@@ -449,16 +566,27 @@
     }
 
     function resize() {
-      var w = canvas.clientWidth;
-      var h = canvas.clientHeight;
-      if (w < 1 || h < 1) return;
+      var cw = canvas.clientWidth;
+      var ch = canvas.clientHeight;
+      if (cw < 1 || ch < 1) return;
+      bounds = boundsForCanvas(cw, ch);
+      center.set(bounds.cx, bounds.cy, bounds.cz);
+      r = bounds.r;
+      for (ci = 0; ci < 8; ci++) {
+        corners[ci].set(
+          center.x + (ci & 1 ? r : -r),
+          center.y + (ci & 2 ? r : -r),
+          center.z + (ci & 4 ? r : -r)
+        );
+      }
+      chainGroup.visible = !bounds.tight || chainCount > 0;
       var qq = getQ();
       var dpr = qq.lite ? 1 : Math.min(qq.dpr || 2, window.devicePixelRatio || 1, 2);
       var maxPx = qq.orbMaxPx || 1280;
-      if (maxPx > 0) dpr = Math.min(dpr, maxPx / Math.max(w, h));
+      if (maxPx > 0) dpr = Math.min(dpr, maxPx / Math.max(cw, ch));
       renderer.setPixelRatio(dpr);
-      renderer.setSize(w, h, false);
-      camera.aspect = w / h;
+      renderer.setSize(cw, ch, false);
+      camera.aspect = cw / ch;
       camera.updateProjectionMatrix();
       fitCamera();
       fitScale();
@@ -470,9 +598,12 @@
       frame += 1;
       if (frame % (getQ().orbFrameSkip || 1) !== 0) { schedule(); return; }
       var t = (now - start) * 0.001;
+      var rx = getReactive();
       sphereUniforms.uTime.value = t;
       innerUniforms.uTime.value = t;
-      animateChains(t);
+      applyReactiveVisuals(t, rx);
+      animateChains(t, rx);
+      animateExtras(t, rx);
       fitScale();
       var t0 = performance.now();
       renderer.render(scene, camera);
@@ -504,6 +635,7 @@
       if (scene.environment) scene.environment.dispose();
       linkGeo.dispose();
       linkMat.dispose();
+      starGeo.dispose();
       outer.geometry.dispose();
       outer.material.dispose();
       inner.geometry.dispose();

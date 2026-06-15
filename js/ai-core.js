@@ -144,7 +144,24 @@
 
   var VOICE_KEY = 'hls-ai-voice';
   var SPEECH_LANG = { en: 'en-US', ru: 'ru-RU', zh: 'zh-CN' };
+  var SPEECH_LANGS = ['en', 'ru', 'zh'];
   var speechVoices = [];
+  var speechVoiceBundle = null;
+  var speechVoiceBundleMode = 'per-lang';
+
+  function emitOrb(mode, detail) {
+    if (window.HLS && window.HLS.setOrbReactive) {
+      window.HLS.setOrbReactive(mode, detail || {});
+    } else {
+      document.dispatchEvent(new CustomEvent('ai-core:orb', {
+        detail: Object.assign({ mode: mode }, detail || {})
+      }));
+    }
+  }
+
+  function releaseOrbIdle(delay) {
+    emitOrb('idle', { delay: delay == null ? 500 : delay });
+  }
 
   function getLang() {
     return (window.HLS && window.HLS.getLang) ? window.HLS.getLang() : 'en';
@@ -230,6 +247,7 @@
 
   function showThinking() {
     if (!state.messagesEl || state.thinkingEl) return;
+    emitOrb('thinking');
     state.thinkingEl = document.createElement('div');
     state.thinkingEl.className = 'ai-core-msg ai-core-msg--bot ai-core-msg--typing ai-core-msg--thinking';
     state.thinkingEl.setAttribute('aria-busy', 'true');
@@ -243,6 +261,7 @@
       state.thinkingEl.remove();
       state.thinkingEl = null;
     }
+    if (!state.typing && !state.speaking) releaseOrbIdle(350);
   }
 
   function askGeneral(raw) {
@@ -291,6 +310,7 @@
     });
 
     document.dispatchEvent(new CustomEvent('ai-core:navigate', { detail: { sectionId: 'hero' } }));
+    emitOrb('navigate', { sectionId: 'hero', impulse: 0.55 });
   }
 
   function scrollToSection(id) {
@@ -307,6 +327,7 @@
     });
 
     document.dispatchEvent(new CustomEvent('ai-core:navigate', { detail: { sectionId: id } }));
+    emitOrb('navigate', { sectionId: id, impulse: 0.6 });
   }
 
   function appendBubble(text, role) {
@@ -589,66 +610,218 @@
     return String(name || '').toLowerCase();
   }
 
-  function pickBestVoice(lang) {
-    var code = SPEECH_LANG[lang] || SPEECH_LANG.en;
-    var prefix = code.split('-')[0];
+  function voiceLangBucket(voice) {
+    var lang = String(voice.lang || '').toLowerCase().replace('_', '-');
+    if (lang.indexOf('en') === 0) return 'en';
+    if (lang.indexOf('ru') === 0) return 'ru';
+    if (lang.indexOf('zh') === 0) return 'zh';
+    return null;
+  }
+
+  function isMultilingualCandidate(voice) {
+    var name = normalizeVoiceName(voice.name);
+    if (/multilingual|multi-lingual|multi language|polyglot/i.test(name)) return true;
+    if (/microsoft (ryan|jenny|aria)/i.test(name) && /natural|online/i.test(name)) return true;
+    if (/google.*multilingual/i.test(name)) return true;
+    return false;
+  }
+
+  function voiceQualityScore(voice) {
+    var name = normalizeVoiceName(voice.name);
+    var score = 0;
+    if (/multilingual|multi-lingual/i.test(name)) score += 120;
+    if (/microsoft.*online.*natural/i.test(name)) score += 100;
+    if (/microsoft.*natural/i.test(name)) score += 85;
+    if (/google/i.test(name)) score += 70;
+    if (/microsoft/i.test(name)) score += 55;
+    if (voice.localService) score += 8;
+    if (voice.default) score += 4;
+    return score;
+  }
+
+  function voicePreferenceScore(voice, lang) {
     var prefer = {
       en: [
-        /microsoft (david|mark|guy|ryan|george|james)/i,
-        /google.*english.*(male|united states)/i,
-        /google uk english male/i,
-        /daniel/i,
-        /alex(?!a)/i,
-        /fred/i,
-        /tom/i,
-        /rishi/i
+        /microsoft ryan/i, /microsoft david/i, /microsoft mark/i, /microsoft guy/i,
+        /google.*english.*(male|united states)/i, /google uk english male/i,
+        /daniel/i, /alex(?!a)/i, /fred/i, /tom/i, /rishi/i
       ],
       ru: [
-        /google.*russian.*male/i,
-        /dmitri/i,
-        /pavel/i,
-        /yuri/i,
-        /maxim/i
+        /microsoft dmitri/i, /microsoft pavel/i, /google.*russian.*male/i,
+        /dmitri/i, /pavel/i, /yuri/i, /maxim/i
       ],
       zh: [
-        /yunxi/i,
-        /yunjian/i,
-        /kangkang/i,
-        /google.*mandarin.*male/i,
-        /zh-cn.*male/i
+        /microsoft yunxi/i, /microsoft yunjian/i, /yunxi/i, /yunjian/i,
+        /kangkang/i, /google.*mandarin.*male/i, /zh-cn.*male/i
       ]
     };
     var patterns = prefer[lang] || prefer.en;
+    var name = normalizeVoiceName(voice.name);
     var i;
-    var p;
+    for (i = 0; i < patterns.length; i++) {
+      if (patterns[i].test(name)) return 100 - i;
+    }
+    return 0;
+  }
+
+  function rankVoiceForLang(voice, lang) {
+    return voiceQualityScore(voice) + voicePreferenceScore(voice, lang);
+  }
+
+  function findMultilingualVoice() {
+    var best = null;
+    var bestScore = -1;
+    var i;
     var voice;
-
-    refreshSpeechVoices();
-
-    for (p = 0; p < patterns.length; p++) {
-      for (i = 0; i < speechVoices.length; i++) {
-        voice = speechVoices[i];
-        if (voice.lang.indexOf(prefix) !== 0) continue;
-        if (isExcludedVoice(voice.name)) continue;
-        if (patterns[p].test(normalizeVoiceName(voice.name))) return voice;
+    for (i = 0; i < speechVoices.length; i++) {
+      voice = speechVoices[i];
+      if (isExcludedVoice(voice.name)) continue;
+      if (!isMultilingualCandidate(voice)) continue;
+      var score = voiceQualityScore(voice);
+      if (/multilingual|multi-lingual/i.test(normalizeVoiceName(voice.name))) score += 40;
+      if (score > bestScore) {
+        bestScore = score;
+        best = voice;
       }
     }
+    return best;
+  }
+
+  function findBestVoiceForLang(lang) {
+    var code = SPEECH_LANG[lang] || SPEECH_LANG.en;
+    var prefix = code.split('-')[0];
+    var best = null;
+    var bestScore = -1;
+    var i;
+    var voice;
+    var score;
 
     for (i = 0; i < speechVoices.length; i++) {
       voice = speechVoices[i];
-      if (voice.lang === code && !isExcludedVoice(voice.name)) return voice;
-    }
-    for (i = 0; i < speechVoices.length; i++) {
-      voice = speechVoices[i];
-      if (voice.lang.indexOf(prefix) === 0 && voice.localService && !isExcludedVoice(voice.name)) {
-        return voice;
+      if (isExcludedVoice(voice.name)) continue;
+      if (voice.lang !== code && voice.lang.indexOf(prefix) !== 0) continue;
+      score = rankVoiceForLang(voice, lang);
+      if (score > bestScore) {
+        bestScore = score;
+        best = voice;
       }
     }
+    return best;
+  }
+
+  function providerFamily(name) {
+    name = normalizeVoiceName(name);
+    if (/microsoft.*online.*natural/i.test(name)) return 'ms-natural';
+    if (/microsoft/i.test(name)) return 'microsoft';
+    if (/google/i.test(name)) return 'google';
+    return 'other';
+  }
+
+  function buildMatchedTriplet() {
+    var buckets = { en: [], ru: [], zh: [] };
+    var i;
+    var voice;
+    var bucket;
+
     for (i = 0; i < speechVoices.length; i++) {
       voice = speechVoices[i];
-      if (voice.lang.indexOf(prefix) === 0 && !isExcludedVoice(voice.name)) return voice;
+      if (isExcludedVoice(voice.name)) continue;
+      bucket = voiceLangBucket(voice);
+      if (bucket) buckets[bucket].push(voice);
     }
-    return null;
+
+    SPEECH_LANGS.forEach(function (lang) {
+      buckets[lang].sort(function (a, b) {
+        return rankVoiceForLang(b, lang) - rankVoiceForLang(a, lang);
+      });
+    });
+
+    var families = ['ms-natural', 'microsoft', 'google', 'other'];
+    var fi;
+    var li;
+    var candidate;
+    var bundle;
+    var familyMatch;
+
+    for (fi = 0; fi < families.length; fi++) {
+      familyMatch = families[fi];
+      bundle = {};
+      for (li = 0; li < SPEECH_LANGS.length; li++) {
+        candidate = null;
+        for (i = 0; i < buckets[SPEECH_LANGS[li]].length; i++) {
+          if (providerFamily(buckets[SPEECH_LANGS[li]][i].name) === familyMatch) {
+            candidate = buckets[SPEECH_LANGS[li]][i];
+            break;
+          }
+        }
+        if (!candidate && familyMatch === 'other') {
+          candidate = buckets[SPEECH_LANGS[li]][0] || null;
+        }
+        if (!candidate) {
+          bundle = null;
+          break;
+        }
+        bundle[SPEECH_LANGS[li]] = candidate;
+      }
+      if (bundle) return bundle;
+    }
+
+    bundle = {};
+    for (li = 0; li < SPEECH_LANGS.length; li++) {
+      bundle[SPEECH_LANGS[li]] = buckets[SPEECH_LANGS[li]][0] || findBestVoiceForLang(SPEECH_LANGS[li]);
+    }
+    return bundle;
+  }
+
+  function rebuildSpeechVoiceBundle() {
+    var multi = findMultilingualVoice();
+    if (multi) {
+      speechVoiceBundle = {
+        mode: 'multilingual',
+        shared: multi,
+        en: multi,
+        ru: multi,
+        zh: multi
+      };
+      speechVoiceBundleMode = 'multilingual';
+      return speechVoiceBundle;
+    }
+
+    var triplet = buildMatchedTriplet();
+    speechVoiceBundle = {
+      mode: 'matched',
+      shared: null,
+      en: triplet.en || null,
+      ru: triplet.ru || null,
+      zh: triplet.zh || null
+    };
+    speechVoiceBundleMode = 'matched';
+    return speechVoiceBundle;
+  }
+
+  function getSpeechVoice(lang) {
+    lang = lang || getLang();
+    if (!speechVoiceBundle) rebuildSpeechVoiceBundle();
+    var voice = speechVoiceBundle[lang];
+    if (voice) return voice;
+    return findBestVoiceForLang(lang);
+  }
+
+  function pickBestVoice(lang) {
+    return getSpeechVoice(lang);
+  }
+
+  function getSpeechVoiceInfo() {
+    if (!speechVoiceBundle) rebuildSpeechVoiceBundle();
+    return {
+      mode: speechVoiceBundleMode,
+      multilingual: speechVoiceBundleMode === 'multilingual',
+      voices: {
+        en: speechVoiceBundle.en ? speechVoiceBundle.en.name : null,
+        ru: speechVoiceBundle.ru ? speechVoiceBundle.ru.name : null,
+        zh: speechVoiceBundle.zh ? speechVoiceBundle.zh.name : null
+      }
+    };
   }
 
   function speechRate(lang) {
@@ -671,6 +844,7 @@
     }
 
     state.typing = true;
+    emitOrb('typing');
     var bubble = document.createElement('div');
     bubble.className = 'ai-core-msg ai-core-msg--bot ai-core-msg--typing';
     state.messagesEl.appendChild(bubble);
@@ -710,6 +884,7 @@
         });
         return;
       }
+      if (!state.speaking) releaseOrbIdle(450);
       if (opts.onDone) opts.onDone();
     }
 
@@ -743,9 +918,11 @@
   function refreshSpeechVoices() {
     if (!state.speechSupported) return;
     speechVoices = window.speechSynthesis.getVoices() || [];
+    rebuildSpeechVoiceBundle();
   }
 
-  function speakAsync(text) {
+  function speakAsync(text, opts) {
+    opts = opts || {};
     return new Promise(function (resolve) {
       if (!state.voiceEnabled || !state.speechSupported || !text) {
         resolve();
@@ -754,7 +931,7 @@
 
       stopSpeech();
 
-      var lang = getLang();
+      var lang = opts.lang || getLang();
       var prepared = prepareSpeechText(text, lang);
       var utterance = new SpeechSynthesisUtterance(prepared);
 
@@ -763,20 +940,23 @@
       utterance.pitch = speechPitch(lang);
       utterance.volume = 1;
 
-      var voice = pickBestVoice(lang);
+      var voice = getSpeechVoice(lang);
       if (voice) utterance.voice = voice;
 
       state.speechResolve = resolve;
       state.speaking = true;
+      emitOrb('speaking');
 
       utterance.onend = function () {
         state.speaking = false;
         if (state.speechResolve === resolve) state.speechResolve = null;
+        if (!state.typing) releaseOrbIdle(650);
         resolve();
       };
       utterance.onerror = function () {
         state.speaking = false;
         if (state.speechResolve === resolve) state.speechResolve = null;
+        if (!state.typing) releaseOrbIdle(400);
         resolve();
       };
 
@@ -823,6 +1003,10 @@
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = refreshSpeechVoices;
     }
+
+    window.addEventListener('hls:locale-change', function () {
+      refreshSpeechVoices();
+    });
 
     state.voiceBtn.addEventListener('click', function () {
       setVoiceEnabled(!state.voiceEnabled);
@@ -954,12 +1138,14 @@
 
     state.recognition.onstart = function () {
       state.listening = true;
+      emitOrb('listening');
       updateMicButton();
     };
 
     state.recognition.onend = function () {
       state.listening = false;
       updateMicButton();
+      if (!state.typing && !state.speaking && !state.aiPending) releaseOrbIdle(700);
       if (!state.micAutoStart || state.micPermissionGranted !== true) return;
       if (state.tourTimer || state.typing || state.speaking) return;
       window.setTimeout(function () {
@@ -1046,6 +1232,7 @@
 
   function sayUser(text) {
     appendBubble(text, 'user');
+    emitOrb('user', { impulse: 0.48 });
   }
 
   function stopTour() {
@@ -1055,6 +1242,7 @@
     }
     state.tourIndex = 0;
     stopSpeech();
+    releaseOrbIdle(400);
   }
 
   function presentSection(sec, opts) {
@@ -1113,6 +1301,7 @@
 
   function startTour(userText) {
     stopTour();
+    emitOrb('tour');
     state.micPausedForTour = state.micAutoStart;
     state.micAutoStart = false;
     stopListening();
@@ -1316,40 +1505,91 @@
       var h = canvas.clientHeight;
       var cx = w * 0.5;
       var cy = h * 0.48;
-      var sx = cx + (Math.random() - 0.5) * w * 0.22;
-      var sy = cy + (Math.random() - 0.5) * h * 0.16;
+      var sx = cx + (Math.random() - 0.5) * w * 0.28;
+      var sy = cy - h * 0.12 + (Math.random() - 0.5) * h * 0.1;
       var points = [{ x: sx, y: sy }];
       var x = sx;
       var y = sy;
-      var segments = 5 + Math.floor(Math.random() * 5);
+      var segments = 6 + Math.floor(Math.random() * 6);
+      var branchAt = segments > 7 ? 3 + Math.floor(Math.random() * 3) : -1;
+      var branches = [];
 
       for (var i = 0; i < segments; i++) {
-        x += (Math.random() - 0.5) * w * 0.16;
-        y += h / segments + (Math.random() - 0.5) * 20;
+        x += (Math.random() - 0.5) * w * 0.14;
+        y += h / segments + (Math.random() - 0.5) * 18;
         points.push({ x: x, y: y });
+        if (i === branchAt) {
+          var bx = x;
+          var by = y;
+          var bpts = [{ x: bx, y: by }];
+          var j;
+          for (j = 0; j < 3; j++) {
+            bx += (Math.random() - 0.5) * w * 0.12;
+            by += h * 0.06 + (Math.random() - 0.5) * 12;
+            bpts.push({ x: bx, y: by });
+          }
+          branches.push(bpts);
+        }
       }
 
+      var color = COLORS[Math.floor(Math.random() * COLORS.length)];
       bolts.push({
         points: points,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        branches: branches,
+        color: color,
         life: 1,
-        width: 1.2 + Math.random() * 1.8
+        width: 1.4 + Math.random() * 2.4
       });
+
+      if (Math.random() < 0.45) {
+        var sx2 = cx + (Math.random() - 0.5) * w * 0.34;
+        var sy2 = cy - h * 0.08;
+        var pts2 = [{ x: sx2, y: sy2 }];
+        var x2 = sx2;
+        var y2 = sy2;
+        for (var k = 0; k < 4 + Math.floor(Math.random() * 4); k++) {
+          x2 += (Math.random() - 0.5) * w * 0.1;
+          y2 += h * 0.08;
+          pts2.push({ x: x2, y: y2 });
+        }
+        bolts.push({
+          points: pts2,
+          branches: [],
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          life: 0.85,
+          width: 0.9 + Math.random() * 1.2
+        });
+      }
+    }
+
+    function strokePath(points, width, color, alpha, blur) {
+      if (points.length < 2) return;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = alpha;
+      ctx.shadowBlur = blur;
+      ctx.shadowColor = color;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (var i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.stroke();
+      ctx.restore();
     }
 
     function drawBolt(bolt) {
       if (bolt.points.length < 2) return;
-      ctx.save();
-      ctx.strokeStyle = bolt.color;
-      ctx.lineWidth = bolt.width;
-      ctx.globalAlpha = bolt.life * 0.85;
-      ctx.beginPath();
-      ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
-      for (var i = 1; i < bolt.points.length; i++) {
-        ctx.lineTo(bolt.points[i].x, bolt.points[i].y);
+      strokePath(bolt.points, bolt.width * 3.2, bolt.color, bolt.life * 0.22, 18);
+      strokePath(bolt.points, bolt.width * 1.6, '#ffffff', bolt.life * 0.35, 10);
+      strokePath(bolt.points, bolt.width, bolt.color, bolt.life * 0.92, 6);
+      var bi;
+      for (bi = 0; bi < bolt.branches.length; bi++) {
+        strokePath(bolt.branches[bi], bolt.width * 0.7, bolt.color, bolt.life * 0.55, 4);
       }
-      ctx.stroke();
-      ctx.restore();
     }
 
     function draw(now) {
@@ -1368,7 +1608,7 @@
       var h = canvas.clientHeight;
       ctx.clearRect(0, 0, w, h);
 
-      if (now - lastFlash > 700 + Math.random() * 1200) {
+      if (now - lastFlash > 420 + Math.random() * 900) {
         randomBolt();
         lastFlash = now;
       }
@@ -1388,6 +1628,19 @@
     window.addEventListener('hls:hero-visibility', onResize);
     document.addEventListener('ai-core:navigate', function () {
       if (shouldRun()) randomBolt();
+    });
+
+    document.addEventListener('ai-core:orb', function (e) {
+      if (!shouldRun()) return;
+      var mode = e.detail && e.detail.mode;
+      var i;
+      if (mode === 'navigate') {
+        for (i = 0; i < 3; i++) randomBolt();
+      } else if (mode === 'user' || mode === 'speaking') {
+        randomBolt();
+      } else if (mode === 'thinking') {
+        if (Math.random() < 0.6) randomBolt();
+      }
     });
 
     raf = requestAnimationFrame(draw);
@@ -1457,6 +1710,8 @@
       var sec = sectionFromId(sectionId);
       if (sec) presentSection(sec);
     };
+    window.HLS.getSpeechVoiceInfo = getSpeechVoiceInfo;
+    window.HLS.refreshSpeechVoices = refreshSpeechVoices;
 
     initVoice();
     initSpeechRecognition();
