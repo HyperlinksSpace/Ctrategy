@@ -175,7 +175,9 @@
     raf: 0,
     active: false,
     soundActive: false,
-    energy: 0
+    energy: 0,
+    useAnalyser: false,
+    monitorAttempted: false
   };
 
   function emitOrb(mode, detail) {
@@ -1403,13 +1405,101 @@
   }
 
   function releaseMicCapture() {
-    stopMicVisualizer();
-    teardownMicAudioGraph();
-    if (!state.micStream) return;
-    state.micStream.getTracks().forEach(function (track) {
-      track.stop();
+    micVis.useAnalyser = false;
+    micVis.monitorAttempted = false;
+    if (state.micStream) {
+      state.micStream.getTracks().forEach(function (track) {
+        track.stop();
+      });
+      state.micStream = null;
+    }
+    if (micVis.source) {
+      try { micVis.source.disconnect(); } catch (e) { /* noop */ }
+      micVis.source = null;
+    }
+    if (micVis.ctx) {
+      var ctx = micVis.ctx;
+      micVis.ctx = null;
+      micVis.analyser = null;
+      micVis.data = null;
+      if (ctx.close) ctx.close().catch(function () { /* noop */ });
+    }
+  }
+
+  function setupMicAudioGraph(stream) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC || !stream) return false;
+    try {
+      if (micVis.ctx) {
+        try { micVis.source.disconnect(); } catch (e) { /* noop */ }
+      } else {
+        micVis.ctx = new AC();
+      }
+      micVis.analyser = micVis.ctx.createAnalyser();
+      micVis.analyser.fftSize = 256;
+      micVis.analyser.smoothingTimeConstant = 0.72;
+      micVis.analyser.minDecibels = -85;
+      micVis.analyser.maxDecibels = -8;
+      micVis.data = new Uint8Array(micVis.analyser.frequencyBinCount);
+      micVis.source = micVis.ctx.createMediaStreamSource(stream);
+      micVis.source.connect(micVis.analyser);
+      if (micVis.ctx.state === 'suspended') {
+        micVis.ctx.resume().catch(function () { /* noop */ });
+      }
+      micVis.useAnalyser = true;
+      return true;
+    } catch (e) {
+      micVis.useAnalyser = false;
+      return false;
+    }
+  }
+
+  function canUseAudioMonitor() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+    if (!window.AudioContext && !window.webkitAudioContext) return false;
+    if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return false;
+    return true;
+  }
+
+  function tryAttachAudioMonitor() {
+    if (!state.listening || micVis.monitorAttempted || !canUseAudioMonitor()) return;
+    micVis.monitorAttempted = true;
+
+    navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    }).then(function (stream) {
+      if (!state.listening) {
+        stream.getTracks().forEach(function (track) { track.stop(); });
+        return;
+      }
+      state.micStream = stream;
+      setupMicAudioGraph(stream);
+    }).catch(function () {
+      micVis.useAnalyser = false;
     });
-    state.micStream = null;
+  }
+
+  function paintMicEqFromAnalyser() {
+    if (!micVis.analyser || !micVis.data || !micVis.bars) return false;
+    micVis.analyser.getByteFrequencyData(micVis.data);
+    var bands = micVis.bars.length;
+    var slice = Math.max(1, Math.floor(micVis.data.length / (bands * 2)));
+    var barWeights = [0.92, 1.2, 1.0, 1.24];
+    micVis.bars.forEach(function (bar, i) {
+      var sum = 0;
+      var offset = i * slice;
+      var j;
+      for (j = 0; j < slice; j++) sum += micVis.data[offset + j] || 0;
+      var avg = sum / slice;
+      var weight = barWeights[i] || 1;
+      var pct = 12 + Math.pow(avg / 255, 0.72) * 88 * weight;
+      bar.style.setProperty('--eq-level', Math.round(Math.min(100, pct)) + '%');
+    });
+    return true;
   }
 
   function bumpMicEqEnergy(amount) {
@@ -1427,26 +1517,6 @@
       bar.style.setProperty('--eq-level', Math.round(Math.min(100, pct)) + '%');
     });
   }
-  function teardownMicAudioGraph() {
-    if (micVis.raf) {
-      cancelAnimationFrame(micVis.raf);
-      micVis.raf = 0;
-    }
-    micVis.active = false;
-    if (micVis.source) {
-      try { micVis.source.disconnect(); } catch (e) { /* noop */ }
-      micVis.source = null;
-    }
-    if (micVis.ctx) {
-      var ctx = micVis.ctx;
-      micVis.ctx = null;
-      micVis.analyser = null;
-      micVis.data = null;
-      if (ctx.close) ctx.close().catch(function () { /* noop */ });
-    }
-    resetMicEqBars();
-  }
-
   function tickMicVisualizer() {
     if (!micVis.active || !micVis.bars || !micVis.bars.length) return;
     if (!state.listening && !state.micStarting) {
@@ -1454,10 +1524,16 @@
       return;
     }
 
+    if (micVis.useAnalyser && paintMicEqFromAnalyser()) {
+      micVis.raf = requestAnimationFrame(tickMicVisualizer);
+      return;
+    }
+
     if (micVis.soundActive) {
-      bumpMicEqEnergy(0.14);
+      bumpMicEqEnergy(0.22);
     } else {
-      micVis.energy = Math.max(0, micVis.energy - 0.022);
+      var ambient = 0.34 + (Math.sin(Date.now() / 320) + 1) * 0.16;
+      micVis.energy = Math.max(ambient, micVis.energy - 0.014);
     }
     paintMicEqBars();
     micVis.raf = requestAnimationFrame(tickMicVisualizer);
@@ -1580,7 +1656,7 @@
     recognition.onend = function () {
       clearMicStartTimeout();
       micVis.soundActive = false;
-      stopMicVisualizer();
+      releaseMicCapture();
       state.listening = false;
       state.micStarting = false;
       updateMicButton();
@@ -1596,7 +1672,7 @@
     recognition.onerror = function (event) {
       clearMicStartTimeout();
       micVis.soundActive = false;
-      stopMicVisualizer();
+      releaseMicCapture();
       state.listening = false;
       state.micStarting = false;
       updateMicButton();
@@ -1626,6 +1702,16 @@
 
     recognition.onresult = handleRecognitionResult;
 
+    recognition.onaudiostart = function () {
+      micVis.soundActive = true;
+      bumpMicEqEnergy(0.55);
+      paintMicEqBars();
+    };
+
+    recognition.onaudioend = function () {
+      micVis.soundActive = false;
+    };
+
     recognition.onsoundstart = function () {
       micVis.soundActive = true;
       bumpMicEqEnergy(0.78);
@@ -1638,6 +1724,11 @@
 
     recognition.onspeechstart = function () {
       bumpMicEqEnergy(0.65);
+      paintMicEqBars();
+    };
+
+    recognition.onspeechend = function () {
+      micVis.soundActive = false;
     };
   }
 
@@ -1645,7 +1736,7 @@
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return null;
     var recognition = new SR();
-    recognition.continuous = !(window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     attachRecognitionHandlers(recognition);
@@ -1825,6 +1916,7 @@
     clearMicRestartTimer();
     clearMicAutoStartTimer();
     clearMicStartTimeout();
+    stopSpeech();
     releaseMicCapture();
     state.micStarting = true;
     updateMicButton();
@@ -1832,10 +1924,12 @@
     try {
       state.recognition.lang = SPEECH_LANG[getLang()] || SPEECH_LANG.en;
       state.recognition.start();
+      startMicVisualizer();
       micStartTimeout = window.setTimeout(function () {
         micStartTimeout = 0;
         if (!state.listening && state.micStarting) {
           state.micStarting = false;
+          releaseMicCapture();
           updateMicButton();
           rebuildRecognitionInstance();
           if (micIsEnabled()) scheduleMicRestart(500);
@@ -1843,6 +1937,7 @@
       }, 4500);
     } catch (err) {
       state.micStarting = false;
+      releaseMicCapture();
       updateMicButton();
       recognitionFailCount += 1;
       if (recognitionFailCount >= 2) {
@@ -1894,6 +1989,7 @@
     }
 
     state.listening = false;
+    releaseMicCapture();
     stopMicVisualizer();
     updateMicButton();
     if (!silent && !micBusy()) {
