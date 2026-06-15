@@ -159,6 +159,9 @@
   var speechVoicesReady = false;
   var micRestartTimer = 0;
   var micAutoStartTimer = 0;
+  var micInterimTimer = 0;
+  var micLastInterim = '';
+  var pendingVoiceInput = '';
   var aiRequestGen = 0;
 
   function emitOrb(mode, detail) {
@@ -1057,7 +1060,7 @@
 
     function afterSpeech() {
       if (opts.onDone) opts.onDone();
-      else if (micIsEnabled()) scheduleMicAutoStart(450);
+      else maybeAutoStartMic();
     }
 
     function finish() {
@@ -1320,6 +1323,12 @@
     });
   }
 
+  function clearMicInterimTimer() {
+    if (!micInterimTimer) return;
+    clearTimeout(micInterimTimer);
+    micInterimTimer = 0;
+  }
+
   function clearMicRestartTimer() {
     if (!micRestartTimer) return;
     clearTimeout(micRestartTimer);
@@ -1358,13 +1367,98 @@
     if (!state.micAutoStart) {
       clearMicRestartTimer();
       clearMicAutoStartTimer();
+      clearMicInterimTimer();
+      micLastInterim = '';
+      pendingVoiceInput = '';
       stopListening(true);
     }
     updateMicButton();
   }
 
   function micIsEnabled() {
-    return !!(state.micAutoStart && state.micPermissionGranted === true);
+    return !!(state.micAutoStart && state.micPermissionGranted !== false);
+  }
+
+  function speechActive() {
+    if (state.speaking) return true;
+    if (!window.speechSynthesis) return false;
+    return !!(window.speechSynthesis.speaking || window.speechSynthesis.pending);
+  }
+
+  function micBusy() {
+    return !!(state.typing || state.aiPending || speechActive() ||
+      (state.tourActive && (state.speaking || state.tourTimer)));
+  }
+
+  function queueVoiceInput(raw) {
+    var text = String(raw || '').trim();
+    if (!text) return;
+    pendingVoiceInput = text;
+    if (state.inputEl) state.inputEl.value = text;
+  }
+
+  function flushPendingVoiceInput() {
+    if (!pendingVoiceInput) return;
+    if (micBusy()) {
+      scheduleMicAutoStart(speechActive() ? 900 : 500);
+      return;
+    }
+    var raw = pendingVoiceInput;
+    pendingVoiceInput = '';
+    handleInput(raw, { fromQueue: true });
+  }
+
+  function commitInterimTranscript() {
+    micInterimTimer = 0;
+    var text = micLastInterim.trim();
+    micLastInterim = '';
+    if (!text) return;
+
+    stopListening(true);
+    var handled = handleInput(text);
+    if (handled) {
+      if (state.inputEl) state.inputEl.value = '';
+    } else if (state.inputEl) {
+      state.inputEl.value = text;
+    }
+  }
+
+  function scheduleInterimCommit(delay) {
+    clearMicInterimTimer();
+    micInterimTimer = window.setTimeout(commitInterimTranscript, delay == null ? 1500 : delay);
+  }
+
+  function processVoiceTranscript(text, isFinal) {
+    text = String(text || '').trim();
+    if (!text) return;
+
+    clearMicInterimTimer();
+    micLastInterim = '';
+
+    if (state.inputEl) state.inputEl.value = text;
+
+    if (isFinal) {
+      stopListening(true);
+      var handled = handleInput(text);
+      if (handled) {
+        if (state.inputEl) state.inputEl.value = '';
+      }
+      return;
+    }
+
+    micLastInterim = text;
+    scheduleInterimCommit(1500);
+  }
+
+  function bootstrapMic() {
+    if (!state.recognitionSupported || !state.micAutoStart || !state.ready) return;
+
+    requestMicPermission().then(function (granted) {
+      updateMicButton();
+      if (granted !== false) {
+        scheduleMicAutoStart(300);
+      }
+    });
   }
 
   function updateMicButton() {
@@ -1430,7 +1524,7 @@
       if (known === false) return false;
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        return null;
+        return true;
       }
 
       return navigator.mediaDevices.getUserMedia({ audio: true })
@@ -1455,12 +1549,8 @@
     if (!micIsEnabled()) return;
     if (state.listening || state.micStarting) return;
 
-    if (state.speaking || state.typing || state.aiPending) {
-      scheduleMicAutoStart(state.speaking ? 900 : 500);
-      return;
-    }
-    if (state.tourActive && (state.speaking || state.tourTimer)) {
-      scheduleMicAutoStart(700);
+    if (micBusy()) {
+      scheduleMicAutoStart(speechActive() ? 900 : 500);
       return;
     }
 
@@ -1482,12 +1572,10 @@
   function maybeAutoStartMic() {
     if (!micIsEnabled()) return;
     if (state.listening || state.micStarting) return;
-    if (state.speaking || state.typing || state.aiPending) {
-      scheduleMicAutoStart(state.speaking ? 900 : 500);
-      return;
-    }
-    if (state.tourActive && state.speaking) {
-      scheduleMicAutoStart(900);
+    flushPendingVoiceInput();
+    if (pendingVoiceInput) return;
+    if (micBusy()) {
+      scheduleMicAutoStart(speechActive() ? 900 : 500);
       return;
     }
     startListening();
@@ -1502,14 +1590,13 @@
 
     requestMicPermission().then(function (granted) {
       updateMicButton();
-      if (granted === true && state.micAutoStart && state.ready) {
-        scheduleMicAutoStart(300);
-      }
+      bootstrapMic();
     });
   }
 
   function stopListening(silent) {
     clearMicRestartTimer();
+    clearMicInterimTimer();
     state.micStarting = false;
     if (!state.recognition) return;
 
@@ -1523,7 +1610,7 @@
 
     state.listening = false;
     updateMicButton();
-    if (!silent && !state.typing && !state.speaking && !state.aiPending) {
+    if (!silent && !micBusy()) {
       releaseOrbIdle(700);
     }
   }
@@ -1540,13 +1627,14 @@
     }
 
     state.recognition = new SR();
-    state.recognition.continuous = true;
+    state.recognition.continuous = !(window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
     state.recognition.interimResults = true;
     state.recognition.maxAlternatives = 1;
 
     state.recognition.onstart = function () {
       state.micStarting = false;
       state.listening = true;
+      state.micPermissionGranted = true;
       emitOrb('listening');
       updateMicButton();
     };
@@ -1555,14 +1643,10 @@
       state.listening = false;
       state.micStarting = false;
       updateMicButton();
-      if (!state.typing && !state.speaking && !state.aiPending) releaseOrbIdle(700);
+      if (!micBusy()) releaseOrbIdle(700);
       if (!micIsEnabled()) return;
-      if (state.tourActive && state.speaking) {
-        scheduleMicAutoStart(900);
-        return;
-      }
-      if (state.speaking || state.typing || state.aiPending) {
-        scheduleMicAutoStart(state.speaking ? 900 : 500);
+      if (micBusy()) {
+        scheduleMicAutoStart(speechActive() ? 900 : 500);
         return;
       }
       scheduleMicRestart(900);
@@ -1576,6 +1660,7 @@
         state.micPermissionGranted = false;
         clearMicRestartTimer();
         clearMicAutoStartTimer();
+        clearMicInterimTimer();
         updateMicButton();
         sayBot('ai.micDenied');
         return;
@@ -1588,22 +1673,33 @@
     };
 
     state.recognition.onresult = function (event) {
-      var transcript = '';
-      var isFinal = false;
+      var finalText = '';
+      var interimText = '';
       var i;
 
       for (i = event.resultIndex; i < event.results.length; i++) {
-        transcript += event.results[i][0].transcript;
-        if (event.results[i].isFinal) isFinal = true;
+        var chunk = event.results[i] && event.results[i][0]
+          ? event.results[i][0].transcript
+          : '';
+        if (event.results[i].isFinal) {
+          finalText += chunk;
+        } else {
+          interimText += chunk;
+        }
       }
 
-      transcript = transcript.trim();
-      if (state.inputEl) state.inputEl.value = transcript;
+      finalText = finalText.trim();
+      interimText = interimText.trim();
 
-      if (isFinal && transcript) {
-        stopListening(true);
-        handleInput(transcript);
-        if (state.inputEl) state.inputEl.value = '';
+      if (finalText) {
+        processVoiceTranscript(finalText, true);
+        return;
+      }
+
+      if (interimText) {
+        micLastInterim = interimText;
+        if (state.inputEl) state.inputEl.value = interimText;
+        scheduleInterimCommit(1500);
       }
     };
 
@@ -1618,13 +1714,11 @@
       setMicAutoStart(true);
 
       requestMicPermission().then(function (granted) {
-        if (granted === true) {
+        if (granted !== false) {
           startListening();
           return;
         }
-        if (granted === false) {
-          sayBot('ai.micDenied');
-        }
+        sayBot('ai.micDenied');
         updateMicButton();
       });
     });
@@ -1768,11 +1862,16 @@
     });
   }
 
-  function handleInput(raw) {
+  function handleInput(raw, opts) {
+    opts = opts || {};
     var text = normalize(raw);
-    if (!text || state.typing || state.aiPending) return;
-    if (state.tourActive && state.speaking) return;
+    if (!text) return false;
+    if (micBusy() || (state.tourActive && state.speaking)) {
+      if (!opts.fromQueue) queueVoiceInput(raw);
+      return false;
+    }
 
+    pendingVoiceInput = '';
     stopTour();
     stopListening(true);
     sayUser(raw);
@@ -1781,19 +1880,19 @@
 
     if (matchesAny(text, GREET_WORDS[lang] || GREET_WORDS.en) && !isGeneralQuestion(text) && text.length < 32) {
       sayBot('ai.greeting');
-      return;
+      return true;
     }
     if (matchesAny(text, THANK_WORDS[lang] || THANK_WORDS.en) && !isGeneralQuestion(text) && text.length < 40) {
       sayBot('ai.thanks');
-      return;
+      return true;
     }
     if (matchesAny(text, HELP_WORDS[lang] || HELP_WORDS.en)) {
       sayBot('ai.help');
-      return;
+      return true;
     }
     if (matchesAny(text, TOUR_WORDS[lang] || TOUR_WORDS.en)) {
       startTour();
-      return;
+      return true;
     }
     if (matchesAny(text, HERE_WORDS[lang] || HERE_WORDS.en)) {
       var hereId = getVisibleSectionId();
@@ -1805,13 +1904,13 @@
       } else {
         sayBot('ai.hereUnknown');
       }
-      return;
+      return true;
     }
 
     var sec = detectSection(text);
     if (sec && isNavigationIntent(text)) {
       openSection(sec);
-      return;
+      return true;
     }
 
     if (text.indexOf('show') !== -1 || text.indexOf('open') !== -1 || text.indexOf('go') !== -1 ||
@@ -1820,11 +1919,12 @@
       sec = detectSection(text.replace(/show|open|go to|go|покажи|открой|перейди|打开|去/g, '').trim());
       if (sec) {
         openSection(sec);
-        return;
+        return true;
       }
     }
 
     askGeneral(raw);
+    return true;
   }
 
   function sectionFromId(id) {
@@ -2138,7 +2238,7 @@
         speakText: tVoice('ai.greeting'),
         onDone: maybeAutoStartMic
       });
-      if (micIsEnabled()) scheduleMicAutoStart(400);
+      bootstrapMic();
     }, state.reducedMotion ? 100 : 600);
 
     window.addEventListener('hls:locale-change', function () {

@@ -1708,6 +1708,11 @@ body.nav-dropdown-open { overflow: hidden; }
   overflow: hidden;
   flex-shrink: 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --switch-fg: var(--header-switch-fg);
+  --switch-fg-hover: var(--header-switch-fg-hover);
+  --switch-active-fg: var(--header-switch-active-fg);
+  --switch-active-bg: var(--header-switch-active-bg);
+  --switch-hover-bg: var(--header-nav-hover-bg);
 }
 
 .lang-btn,
@@ -1731,12 +1736,13 @@ body.nav-dropdown-open { overflow: hidden; }
 }
 
 .theme-btn {
-  color: var(--header-switch-fg, var(--text-secondary));
+  color: var(--switch-fg, var(--header-switch-fg));
 }
 
 .theme-btn svg {
   display: block;
   flex-shrink: 0;
+  color: inherit;
 }
 
 .theme-btn svg .theme-icon-stroke {
@@ -1754,8 +1760,8 @@ body.nav-dropdown-open { overflow: hidden; }
 
 .lang-btn:hover,
 .theme-btn:hover:not(.active) {
-  color: var(--header-switch-fg-hover, var(--text-primary));
-  background: var(--header-nav-hover-bg);
+  color: var(--switch-fg-hover, var(--header-switch-fg-hover));
+  background: var(--switch-hover-bg, var(--header-nav-hover-bg));
 }
 
 .lang-btn:hover {
@@ -1764,9 +1770,17 @@ body.nav-dropdown-open { overflow: hidden; }
 
 .lang-btn.active,
 .theme-btn.active {
-  color: var(--header-switch-active-fg);
-  background: var(--header-switch-active-bg);
+  color: var(--switch-active-fg, var(--header-switch-active-fg));
+  background: var(--switch-active-bg, var(--header-switch-active-bg));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.theme-btn.active svg .theme-icon-stroke {
+  stroke: currentColor;
+}
+
+.theme-btn.active svg .theme-icon-fill {
+  fill: currentColor;
 }
 
 .theme-btn-label { display: none; }
@@ -4357,7 +4371,7 @@ main { position: relative; z-index: 1; padding-top: var(--header-stack); padding
   .theme-switch--panel .theme-btn-label { display: block; font-size: 0.65rem; }
 
   .theme-switch--panel .theme-btn:not(.active) {
-    color: var(--header-switch-fg-hover, var(--text-primary));
+    color: var(--switch-fg-hover, var(--switch-fg));
   }
 
   .theme-switch--panel .theme-btn:not(.active) svg .theme-icon-stroke {
