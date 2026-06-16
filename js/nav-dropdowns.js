@@ -313,6 +313,7 @@
       var headerBtn = e.target.closest('.header-nav-link[data-dropdown]');
       if (headerBtn) {
         e.preventDefault();
+        if (isMobile()) return;
         openDropdown(headerBtn.getAttribute('data-dropdown'));
         return;
       }

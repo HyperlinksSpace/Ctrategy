@@ -764,13 +764,49 @@
   .stratviz-stage.ai-orb-zone {
     min-height: 120px;
     cursor: default;
+    overflow: hidden;
+    isolation: isolate;
   }
   .stratviz-cursor-reticle,
   .stratviz-cursor-aura,
-  .stratviz-coords { display: none; }
+  .stratviz-coords,
+  .stratviz-signal-bars,
+  .stratviz-hud::before,
+  .stratviz-frame-corners,
+  .stratviz-cursor-trail {
+    display: none;
+  }
+  .stratviz-hud {
+    inset: 8px 8px 10px;
+  }
+  .stratviz-vignette {
+    background:
+      radial-gradient(ellipse 88% 72% at 50% 42%, transparent 32%, hsla(248, 42%, 3%, 0.78) 100%);
+  }
   .stratviz-mode-badge {
-    font-size: 8px;
-    padding: 3px 8px;
+    top: 6px;
+    left: 8px;
+    right: auto;
+    transform: none;
+    font-size: 7px;
+    padding: 2px 7px;
+    max-width: calc(100% - 16px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .stratviz-scanline {
+    opacity: 0.35;
+  }
+}
+
+@media (max-width: 480px) {
+  .stratviz-mode-badge {
+    top: 4px;
+    left: 6px;
+    font-size: 6px;
+    padding: 2px 5px;
+    max-width: calc(100% - 12px);
   }
 }
 

@@ -4,3 +4,4 @@ Partners block
 Check links
 Launch site, update URLS
 Update the URL on HSP Landing as well
+Think about https://www.hyperlinks.space/api/ai
