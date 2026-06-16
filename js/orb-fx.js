@@ -86,6 +86,10 @@
     pings.push({ r: 4, life: 1, hue: hue || 220 });
   }
 
+  function safeR(r) {
+    return r > 0.05 ? r : 0.05;
+  }
+
   function getReactive() {
     return window.HLS && window.HLS.getOrbReactive ? window.HLS.getOrbReactive() : {
       intensity: 0.14, pulse: 0.32, speed: 1, hue: 220, mode: 'idle'
@@ -114,7 +118,7 @@
 
       ctx.fillStyle = 'hsla(' + sat.hue + ',92%,' + (lightOrb ? 62 : 74) + '%,' + (0.55 + energy * 0.35) + ')';
       ctx.beginPath();
-      ctx.arc(sx, sy, sat.size * (0.85 + energy * 0.25), 0, Math.PI * 2);
+      ctx.arc(sx, sy, safeR(sat.size * (0.85 + energy * 0.25)), 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -138,14 +142,14 @@
 
     for (i = 0; i < stars.length; i++) {
       s = stars[i];
-      var tw = 0.45 + 0.55 * Math.sin(t * (1.2 + s.z * 2) + s.phase);
+      var tw = Math.max(0.08, 0.45 + 0.55 * Math.sin(t * (1.2 + s.z * 2) + s.phase));
       var sx = s.x * w + Math.sin(t * 0.15 + s.phase) * 4 * s.z;
       var sy = s.y * h + Math.cos(t * 0.12 + s.phase) * 3 * s.z;
       var starLight = lightOrb ? 48 : 72;
       var starAlpha = lightOrb ? 0.82 : 0.55;
       ctx.fillStyle = 'hsla(' + s.hue + ',88%,' + starLight + '%,' + (tw * starAlpha * s.z) + ')';
       ctx.beginPath();
-      ctx.arc(sx, sy, (0.6 + s.z * 1.4) * tw, 0, Math.PI * 2);
+      ctx.arc(sx, sy, safeR((0.6 + s.z * 1.4) * tw), 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -163,7 +167,7 @@
       if (p.life <= 0) return false;
       ctx.fillStyle = 'hsla(' + p.hue + ',100%,78%,' + (p.life * 0.7) + ')';
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 2 * p.life, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, safeR(2 * p.life), 0, Math.PI * 2);
       ctx.fill();
       return true;
     });
@@ -175,7 +179,7 @@
       ctx.strokeStyle = 'hsla(' + p.hue + ',88%,68%,' + (p.life * 0.35) + ')';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.arc(cx, cy, p.r, 0, Math.PI * 2);
+      ctx.arc(cx, cy, safeR(p.r), 0, Math.PI * 2);
       ctx.stroke();
       return true;
     });
