@@ -249,6 +249,7 @@ window.HLS_I18N = {
     'ai.micListeningLabel': 'Listening…',
     'ai.micBlockedLabel': 'Microphone blocked — click to allow',
     'ai.micDenied': 'Microphone access is required for voice input. Please enable it in your browser settings.',
+    'ai.micNoVoice': 'I hear the microphone open, but not your voice. Check Windows sound settings: pick the correct input device and raise the input volume, then try again.',
     'ai.micError': 'Voice input is temporarily unavailable. Please type your command instead.'
   },
 
@@ -502,6 +503,7 @@ window.HLS_I18N = {
     'ai.micListeningLabel': 'Слушаю…',
     'ai.micBlockedLabel': 'Микрофон заблокирован — нажмите, чтобы разрешить',
     'ai.micDenied': 'Для голосового ввода требуется доступ к микрофону. Разрешите его в настройках браузера.',
+    'ai.micNoVoice': 'Микрофон открыт, но голос не распознаётся. Проверьте настройки звука: выберите правильное устройство ввода и увеличьте громкость микрофона.',
     'ai.micError': 'Голосовой ввод временно недоступен. Введите команду вручную.'
   },
 
@@ -755,6 +757,7 @@ window.HLS_I18N = {
     'ai.micListeningLabel': '正在聆听…',
     'ai.micBlockedLabel': '麦克风被阻止 — 点击允许',
     'ai.micDenied': '语音输入需要麦克风权限。请在浏览器设置中启用。',
+    'ai.micNoVoice': '麦克风已打开，但未检测到您的声音。请在系统声音设置中选择正确的输入设备并提高输入音量。',
     'ai.micError': '语音输入暂时不可用。请改为输入命令。'
   }
 };

@@ -167,6 +167,11 @@
   var micStartTimeout = 0;
   var recognitionFailCount = 0;
   var micNoSpeechCount = 0;
+  var micStopReason = '';
+  var micSessionAudio = false;
+  var micSessionSound = false;
+  var micNoVoiceHintShown = false;
+  var micLevelProbed = false;
   var micVis = {
     bars: null,
     ctx: null,
@@ -203,6 +208,9 @@
     'recognition.onaudiostart': true,
     'recognition.onsoundstart': true,
     'recognition.result': true,
+    'recognition.audioButNoVoice': true,
+    'mic.levelProbe': true,
+    'mic.levelLow': true,
     'transcript.final': true,
     'stop': true
   };
@@ -264,6 +272,9 @@
       tourActive: state.tourActive,
       recLang: state.recognition ? state.recognition.lang : null,
       failCount: recognitionFailCount,
+      noSpeechCount: micNoSpeechCount,
+      sessionAudio: micSessionAudio,
+      sessionSound: micSessionSound,
       interim: micLastInterim,
       pendingVoice: pendingVoiceInput,
       vis: {
@@ -1576,6 +1587,72 @@
     })();
   }
 
+  function probeMicInputLevel() {
+    return new Promise(function (resolve) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        resolve({ skipped: true, reason: 'noMediaDevices' });
+        return;
+      }
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) {
+        resolve({ skipped: true, reason: 'noAudioContext' });
+        return;
+      }
+
+      navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: false,
+          autoGainControl: true
+        }
+      }).then(function (stream) {
+        var ctx = new AC();
+        var analyser = ctx.createAnalyser();
+        analyser.fftSize = 512;
+        var src = ctx.createMediaStreamSource(stream);
+        src.connect(analyser);
+        var data = new Uint8Array(analyser.frequencyBinCount);
+        var peak = 0;
+        var started = Date.now();
+
+        function sample() {
+          analyser.getByteTimeDomainData(data);
+          var i;
+          var v;
+          var sum = 0;
+          for (i = 0; i < data.length; i++) {
+            v = (data[i] - 128) / 128;
+            sum += v * v;
+          }
+          var rms = Math.sqrt(sum / data.length);
+          if (rms > peak) peak = rms;
+          if (Date.now() - started < 550) {
+            requestAnimationFrame(sample);
+            return;
+          }
+          stream.getTracks().forEach(function (track) { track.stop(); });
+          try { src.disconnect(); } catch (e) { /* noop */ }
+          if (ctx.close) ctx.close().catch(function () { /* noop */ });
+          resolve({
+            peak: Math.round(peak * 1000) / 1000,
+            quiet: peak < 0.012
+          });
+        }
+
+        if (ctx.state === 'suspended') {
+          ctx.resume().then(sample).catch(sample);
+        } else {
+          sample();
+        }
+      }).catch(function (err) {
+        resolve({
+          error: err && err.name,
+          message: err && err.message
+        });
+      });
+    });
+  }
+
   function clearMicRestartTimer() {
     if (!micRestartTimer) return;
     clearTimeout(micRestartTimer);
@@ -1624,6 +1701,7 @@
       stopListening(true);
       releaseMicCapture();
     }
+    if (!state.micAutoStart) micLevelProbed = false;
     updateMicButton();
   }
 
@@ -1881,6 +1959,8 @@
     else if (parsed.interim) micLogTranscript('interim', parsed.interim);
     if (parsed.final || parsed.interim) {
       micNoSpeechCount = 0;
+      micNoVoiceHintShown = false;
+      micSessionSound = true;
       bumpMicEqEnergy(parsed.final ? 0.88 : 0.62);
       paintMicEqBars();
     }
@@ -1899,7 +1979,9 @@
     recognition.onstart = function () {
       clearMicStartTimeout();
       recognitionFailCount = 0;
-      micNoSpeechCount = 0;
+      micStopReason = '';
+      micSessionAudio = false;
+      micSessionSound = false;
       state.micStarting = false;
       state.listening = true;
       state.micPermissionGranted = true;
@@ -1912,7 +1994,12 @@
     recognition.onend = function () {
       clearMicStartTimeout();
       micVis.soundActive = false;
+      var reason = micStopReason || 'end';
+      micStopReason = '';
       micLog('info', 'recognition.onend', {
+        reason: reason,
+        sessionAudio: micSessionAudio,
+        sessionSound: micSessionSound,
         enabled: micIsEnabled(),
         busy: micBusy(),
         busyReasons: micBusyReasons()
@@ -1927,17 +2014,42 @@
         scheduleMicAutoStart(500);
         return;
       }
-      scheduleMicRestart(450);
+
+      if (reason === 'no-speech') {
+        micNoSpeechCount += 1;
+        if (micSessionAudio && !micSessionSound) {
+          micLog('warn', 'recognition.audioButNoVoice', {
+            count: micNoSpeechCount,
+            hint: 'Mic captures audio but speech VAD never triggered — check default input device and input volume.'
+          });
+          if (micNoSpeechCount >= 3 && !micNoVoiceHintShown) {
+            micNoVoiceHintShown = true;
+            sayBot('ai.micNoVoice');
+          }
+        } else if (micNoSpeechCount >= 5) {
+          micLog('warn', 'recognition.noSpeechHint', {
+            hint: 'Repeated silence timeouts — speak right after the listening indicator appears.'
+          });
+        }
+        scheduleMicRestart(400);
+        return;
+      }
+
+      if (reason === 'not-allowed' || reason === 'service-not-allowed') return;
+      scheduleMicRestart(reason === 'aborted' ? 550 : 450);
     };
 
     recognition.onerror = function (event) {
       clearMicStartTimeout();
       micVis.soundActive = false;
+      micStopReason = event.error || 'unknown';
       var benign = event.error === 'no-speech' || event.error === 'aborted';
       micLog(benign ? 'info' : 'error', 'recognition.onerror', {
         error: event.error,
         message: event.message || '',
-        failCount: recognitionFailCount
+        failCount: recognitionFailCount,
+        sessionAudio: micSessionAudio,
+        sessionSound: micSessionSound
       });
       releaseMicCapture();
       state.listening = false;
@@ -1955,15 +2067,6 @@
       }
 
       if (event.error === 'aborted' || event.error === 'no-speech') {
-        if (event.error === 'no-speech') {
-          micNoSpeechCount += 1;
-          if (micNoSpeechCount === 3) {
-            micLog('warn', 'recognition.noSpeechHint', {
-              hint: 'Mic is open but no audio detected. Check system mic input, browser site permissions, and that nothing else is using the microphone.'
-            });
-          }
-        }
-        if (micIsEnabled()) scheduleMicRestart(event.error === 'no-speech' ? 120 : 500);
         return;
       }
 
@@ -1972,7 +2075,6 @@
         recognitionFailCount = 0;
         rebuildRecognitionInstance();
       }
-      if (micIsEnabled()) scheduleMicRestart(900);
     };
 
     recognition.onnomatch = function () {
@@ -1982,7 +2084,8 @@
     recognition.onresult = handleRecognitionResult;
 
     recognition.onaudiostart = function () {
-      micLog('debug', 'recognition.onaudiostart', null);
+      micSessionAudio = true;
+      micLog('info', 'recognition.onaudiostart', null);
       micVis.soundActive = true;
       bumpMicEqEnergy(0.55);
       paintMicEqBars();
@@ -1994,7 +2097,9 @@
     };
 
     recognition.onsoundstart = function () {
+      micSessionSound = true;
       micNoSpeechCount = 0;
+      micNoVoiceHintShown = false;
       micLog('info', 'recognition.onsoundstart', null);
       micVis.soundActive = true;
       bumpMicEqEnergy(0.78);
@@ -2007,6 +2112,8 @@
     };
 
     recognition.onspeechstart = function () {
+      micSessionSound = true;
+      micNoSpeechCount = 0;
       micLog('info', 'recognition.onspeechstart', null);
       bumpMicEqEnergy(0.65);
       paintMicEqBars();
@@ -2025,7 +2132,7 @@
       return null;
     }
     var recognition = new SR();
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     attachRecognitionHandlers(recognition);
@@ -2243,6 +2350,39 @@
     }
   }
 
+  function beginRecognitionAfterIdle(force) {
+    if (!micIsEnabled()) {
+      state.micStarting = false;
+      updateMicButton();
+      return;
+    }
+    if (state.listening) return;
+
+    if (micLevelProbed) {
+      invokeRecognitionStart(force);
+      return;
+    }
+
+    micLevelProbed = true;
+    probeMicInputLevel().then(function (probe) {
+      micLog('info', 'mic.levelProbe', probe);
+      if (probe.quiet) {
+        micLog('warn', 'mic.levelLow', {
+          peak: probe.peak,
+          hint: 'Input signal is very quiet — raise mic volume or pick the correct device in OS settings.'
+        });
+      }
+      window.setTimeout(function () {
+        if (!micIsEnabled() || state.listening) {
+          state.micStarting = false;
+          updateMicButton();
+          return;
+        }
+        invokeRecognitionStart(force);
+      }, probe.skipped ? 0 : 280);
+    });
+  }
+
   function startListening(force) {
     if (!state.recognitionSupported || !state.recognition) {
       micLog('warn', 'start.skip', { reason: 'unsupported' });
@@ -2274,13 +2414,7 @@
     updateMicButton();
 
     waitForAudioIdle(function () {
-      if (!micIsEnabled()) {
-        state.micStarting = false;
-        updateMicButton();
-        return;
-      }
-      if (state.listening) return;
-      invokeRecognitionStart(force);
+      beginRecognitionAfterIdle(force);
     });
   }
 
