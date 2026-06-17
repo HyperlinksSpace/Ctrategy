@@ -415,14 +415,7 @@
     var mode = rx.mode || 'idle';
 
     if (rx.cursorActive) {
-      cursor.px += ((0.5 + rx.cursorX * 0.46) * w - cursor.px) * 0.18;
-      cursor.py += ((0.44 + rx.cursorY * 0.38) * h - cursor.py) * 0.18;
       cursor.active = true;
-      if (now - lastTrail > 40) {
-        cursorTrail.push({ x: cursor.px, y: cursor.py, life: 1, hue: hue });
-        if (cursorTrail.length > 24) cursorTrail.shift();
-        lastTrail = now;
-      }
     } else {
       cursor.active = false;
       cursor.px += (cx - cursor.px) * 0.035;
@@ -532,45 +525,22 @@
       return true;
     });
 
-    cursorTrail = cursorTrail.filter(function (pt) {
-      pt.life -= 0.035;
-      if (pt.life <= 0) return false;
-      ctx.fillStyle = hsla(pt.hue, 85, 68, pt.life * 0.35);
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, safeR(3 * pt.life), 0, Math.PI * 2);
-      ctx.fill();
-      return true;
-    });
-
     drawSpeakingWave(t, rx, light);
-    drawCursorBeam(rx, light);
+    if (!getQuality().lite) drawCursorBeam(rx, light);
 
     if (cursor.active) {
-      if (now - lastRipple > 90) {
-        addRipple(cursor.px, cursor.py, 0.35, hue);
+      if (now - lastRipple > 120) {
+        addRipple(cursor.px, cursor.py, 0.28, hue);
         lastRipple = now;
       }
-      var grd = ctx.createRadialGradient(cursor.px, cursor.py, 0, cursor.px, cursor.py, 64 + energy * 40);
-      grd.addColorStop(0, hsla(hue, 88, 72, 0.22));
-      grd.addColorStop(0.45, hsla(hue + 50, 72, 55, 0.08));
+      var grd = ctx.createRadialGradient(cursor.px, cursor.py, 0, cursor.px, cursor.py, 48 + energy * 28);
+      grd.addColorStop(0, hsla(hue, 88, 72, 0.14));
+      grd.addColorStop(0.5, hsla(hue + 50, 72, 55, 0.05));
       grd.addColorStop(1, 'transparent');
       ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(cursor.px, cursor.py, 64 + energy * 40, 0, Math.PI * 2);
+      ctx.arc(cursor.px, cursor.py, 48 + energy * 28, 0, Math.PI * 2);
       ctx.fill();
-
-      ctx.strokeStyle = hsla(hue, 90, 72, 0.55);
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(cursor.px - 20, cursor.py);
-      ctx.lineTo(cursor.px - 6, cursor.py);
-      ctx.moveTo(cursor.px + 6, cursor.py);
-      ctx.lineTo(cursor.px + 20, cursor.py);
-      ctx.moveTo(cursor.px, cursor.py - 20);
-      ctx.lineTo(cursor.px, cursor.py - 6);
-      ctx.moveTo(cursor.px, cursor.py + 6);
-      ctx.lineTo(cursor.px, cursor.py + 20);
-      ctx.stroke();
     }
 
     var bloomR = Math.min(w, h) * (0.34 + energy * 0.12);
@@ -633,21 +603,33 @@
   }
 
   function bindCursor(zone) {
+    var syncCursor = window.HLS && window.HLS.throttleRaf
+      ? window.HLS.throttleRaf(function (nx, ny) {
+          if (window.HLS.setStratvizCursor) {
+            window.HLS.setStratvizCursor(nx, ny, true);
+          }
+        })
+      : function (nx, ny) {
+          if (window.HLS && window.HLS.setStratvizCursor) {
+            window.HLS.setStratvizCursor(nx, ny, true);
+          }
+        };
+
     zone.addEventListener('pointermove', function (e) {
       var rect = zone.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       var nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
       var ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-      if (window.HLS && window.HLS.setStratvizCursor) {
-        window.HLS.setStratvizCursor(nx, ny, true);
-      }
+      syncCursor(nx, ny);
       cursor.px = e.clientX - rect.left;
       cursor.py = e.clientY - rect.top;
       cursor.vx = e.movementX || 0;
       cursor.vy = e.movementY || 0;
+      cursor.active = true;
     }, { passive: true });
 
     zone.addEventListener('pointerleave', function () {
+      cursor.active = false;
       if (window.HLS && window.HLS.setStratvizCursor) {
         window.HLS.setStratvizCursor(0, 0, false);
       }

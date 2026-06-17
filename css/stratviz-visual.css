@@ -4,7 +4,7 @@
   --sv-accent: hsl(var(--orb-reactive-hue, 248), 82%, 62%);
   --sv-gold: hsl(var(--orb-reactive-hue, 278), 78%, 58%);
   --sv-glow: hsla(var(--orb-reactive-hue, 248), 80%, 55%, calc(0.12 + var(--orb-reactive-intensity, 0.16) * 0.38));
-  cursor: none;
+  cursor: default;
   pointer-events: auto;
   isolation: isolate;
   border-radius: clamp(12px, 2vw, 20px);
@@ -308,78 +308,42 @@
   100% { filter: brightness(1); transform: perspective(520px) rotateX(68deg) scale(1.2); }
 }
 
-.stratviz-cursor-reticle {
-  position: absolute;
-  left: calc(var(--stratviz-cursor-x, 50) * 1%);
-  top: calc(var(--stratviz-cursor-y, 44) * 1%);
-  width: 48px;
-  height: 48px;
-  margin: -24px 0 0 -24px;
-  pointer-events: none;
-  z-index: 5;
-  opacity: 0;
-  transition: opacity 0.18s ease;
-}
-
-.stratviz-cursor-reticle::before,
-.stratviz-cursor-reticle::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 1px solid hsla(var(--orb-reactive-hue, 278), 88%, 68%, calc(var(--stratviz-cursor-active, 0) * 0.75));
-}
-
-.stratviz-cursor-reticle::before {
-  inset: 6px;
-  border-radius: 2px;
-  border-style: dashed;
-  animation: stratviz-reticle-spin 12s linear infinite;
+.stratviz-cursor-reticle,
+.stratviz-cursor-trail {
+  display: none !important;
 }
 
 .stratviz-cursor-aura {
   position: absolute;
   left: calc(var(--stratviz-cursor-x, 50) * 1%);
   top: calc(var(--stratviz-cursor-y, 44) * 1%);
-  width: 160px;
-  height: 120px;
-  margin: -60px 0 0 -80px;
+  width: 120px;
+  height: 90px;
+  margin: -45px 0 0 -60px;
   pointer-events: none;
   z-index: 4;
   opacity: 0;
   border-radius: 50%;
   background:
-    radial-gradient(ellipse, hsla(var(--orb-reactive-hue, 278), 88%, 58%, calc(var(--stratviz-cursor-active, 0) * 0.22)), transparent 68%);
-  transition: opacity 0.2s ease, transform 0.12s ease;
-  transform: scale(calc(0.8 + var(--stratviz-cursor-active, 0) * 0.3));
-}
-
-.stratviz-stage.stratviz-cursor-on .stratviz-backdrop,
-.stratviz-stage.stratviz-cursor-on .stratviz-fx-canvas,
-.stratviz-stage.stratviz-cursor-on .hero-orb-canvas {
-  transform: perspective(900px)
-    rotateX(calc(var(--stratviz-tilt-x, 0) * 1.15deg))
-    rotateY(calc(var(--stratviz-tilt-y, 0) * 1.15deg))
-    scale(calc(1 + var(--stratviz-cursor-active, 0) * 0.028));
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    radial-gradient(ellipse, hsla(var(--orb-reactive-hue, 278), 88%, 58%, calc(var(--stratviz-cursor-active, 0) * 0.14)), transparent 72%);
+  transition: opacity 0.25s ease;
+  transform: scale(calc(0.85 + var(--stratviz-cursor-active, 0) * 0.15));
 }
 
 .stratviz-stage.stratviz-cursor-on {
   transform: perspective(1200px)
-    rotateX(calc(var(--stratviz-tilt-x, 0) * 0.55deg))
-    rotateY(calc(var(--stratviz-tilt-y, 0) * 0.55deg))
-    scale(calc(1 + var(--stratviz-cursor-active, 0) * 0.012));
+    rotateX(calc(var(--stratviz-tilt-x, 0) * 0.35deg))
+    rotateY(calc(var(--stratviz-tilt-y, 0) * 0.35deg));
+  filter: saturate(calc(1 + var(--stratviz-cursor-active, 0) * 0.06));
 }
 
-.stratviz-backdrop,
-.stratviz-fx-canvas,
-.hero-orb-canvas {
-  transform-origin: 50% 46%;
-  will-change: transform;
-}
-
-.stratviz-stage.stratviz-cursor-on .stratviz-cursor-reticle,
 .stratviz-stage.stratviz-cursor-on .stratviz-cursor-aura {
   opacity: 1;
+}
+
+.stratviz-stage.stratviz-cursor-on .stratviz-depth {
+  transform: translate(calc((var(--stratviz-cursor-x, 50) - 50) * 0.04%), calc((var(--stratviz-cursor-y, 44) - 44) * 0.03%));
+  transition: transform 0.35s ease;
 }
 
 .stratviz-hud {
@@ -564,14 +528,6 @@
   border-color: hsla(265, 58%, 55%, 0.24);
 }
 
-.stratviz-stage.stratviz-cursor-on {
-  transform: perspective(1200px)
-    rotateX(calc(var(--stratviz-tilt-x, 0) * 0.75deg))
-    rotateY(calc(var(--stratviz-tilt-y, 0) * 0.75deg))
-    scale(calc(1 + var(--stratviz-cursor-active, 0) * 0.018));
-  filter: saturate(calc(1 + var(--stratviz-cursor-active, 0) * 0.14)) brightness(calc(1 + var(--stratviz-cursor-active, 0) * 0.06));
-}
-
 .stratviz-stage.orb-reactive--user .stratviz-backdrop {
   animation: stratviz-user-flash 0.55s ease-out;
 }
@@ -588,14 +544,6 @@
 .stratviz-stage.orb-reactive--thinking .stratviz-lattice {
   opacity: 0.32;
   animation: stratviz-lattice-shift 2.8s linear infinite;
-}
-
-.stratviz-stage.stratviz-cursor-on {
-  filter: saturate(calc(1 + var(--stratviz-cursor-active, 0) * 0.1));
-}
-
-.stratviz-stage.stratviz-cursor-on .stratviz-depth {
-  transform: translate(calc((var(--stratviz-cursor-x, 50) - 50) * 0.08%), calc((var(--stratviz-cursor-y, 44) - 44) * 0.06%));
 }
 
 .stratviz-cursor-trail::after {
@@ -682,12 +630,12 @@
 }
 
 .stratviz-stage.stratviz-cursor-on .stratviz-radar {
-  opacity: calc(0.28 + var(--orb-reactive-intensity, 0.16) * 0.5);
+  opacity: calc(0.22 + var(--orb-reactive-intensity, 0.16) * 0.42);
 }
 
 .stratviz-stage.stratviz-cursor-on .stratviz-horizon {
   transform: perspective(520px) rotateX(68deg) scale(1.24)
-    translate(calc((var(--stratviz-cursor-x, 50) - 50) * 0.04%), calc((var(--stratviz-cursor-y, 44) - 44) * 0.03%));
+    translate(calc((var(--stratviz-cursor-x, 50) - 50) * 0.02%), calc((var(--stratviz-cursor-y, 44) - 44) * 0.015%));
 }
 
 .ai-orb-zone.stratviz-stage.orb-reactive--speaking {

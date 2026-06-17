@@ -76,8 +76,8 @@
     zone.style.setProperty('--stratviz-cursor-x', String(50 + reactive.cursorX * 46));
     zone.style.setProperty('--stratviz-cursor-y', String(44 + reactive.cursorY * 38));
     zone.style.setProperty('--stratviz-cursor-active', String(reactive.cursorActive));
-    zone.style.setProperty('--stratviz-tilt-x', String(reactive.cursorY * -4 * reactive.cursorActive));
-    zone.style.setProperty('--stratviz-tilt-y', String(reactive.cursorX * 5 * reactive.cursorActive));
+    zone.style.setProperty('--stratviz-tilt-x', String(reactive.cursorY * -2.5 * reactive.cursorActive));
+    zone.style.setProperty('--stratviz-tilt-y', String(reactive.cursorX * 3 * reactive.cursorActive));
     zone.classList.toggle('stratviz-cursor-on', reactive.cursorActive > 0.05);
   }
 
@@ -142,8 +142,8 @@
       zone.style.setProperty('--stratviz-cursor-x', String(50 + reactive.cursorX * 46));
       zone.style.setProperty('--stratviz-cursor-y', String(44 + reactive.cursorY * 38));
       zone.style.setProperty('--stratviz-cursor-active', String(reactive.cursorActive));
-      zone.style.setProperty('--stratviz-tilt-x', String(reactive.cursorY * -4 * reactive.cursorActive));
-      zone.style.setProperty('--stratviz-tilt-y', String(reactive.cursorX * 5 * reactive.cursorActive));
+      zone.style.setProperty('--stratviz-tilt-x', String(reactive.cursorY * -2.5 * reactive.cursorActive));
+      zone.style.setProperty('--stratviz-tilt-y', String(reactive.cursorX * 3 * reactive.cursorActive));
       var cx = 50 + reactive.cursorX * 46;
       var cy = 44 + reactive.cursorY * 38;
       var beamAngle = Math.atan2(44 - cy, 50 - cx) * (180 / Math.PI);
