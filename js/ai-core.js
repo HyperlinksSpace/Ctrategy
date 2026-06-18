@@ -73,23 +73,33 @@
       }
     },
     {
-      id: 'genesis-mesh',
-      nameKey: 'nav.genesisMesh',
+      id: 'genesis-links',
+      nameKey: 'nav.genesisLinks',
       descKey: 'genesis.title',
       words: {
-        en: ['genesis', 'mesh', 'protocol mesh', 'anriltine', 'founder', 'peer', 'replica', 'merge'],
-        ru: ['genesis', 'mesh', 'протокол', 'anriltine', 'основат', 'peer', 'replica', 'merge'],
-        zh: ['genesis', '网格', '协议', 'anriltine', '创始人', '对等', '合并']
+        en: ['genesis', 'links space', 'links', 'anriltine', 'founder', 'peer', 'replica', 'merge', 'intellectual', 'semantic'],
+        ru: ['genesis', 'links space', 'links', 'anriltine', 'основат', 'peer', 'replica', 'merge', 'интеллект', 'семант'],
+        zh: ['genesis', 'links space', 'links', 'anriltine', '创始人', '对等', '合并', '智力', '语义']
       }
     },
     {
-      id: 'scale-mesh',
-      nameKey: 'nav.scaleMesh',
+      id: 'scale-links',
+      nameKey: 'nav.scaleLinks',
       descKey: 'scale.title',
       words: {
-        en: ['scale', 'trillion', '1t', 'federation', 'planetary', 'infrastructure mesh'],
-        ru: ['масштаб', 'триллион', '1t', 'федерац', 'планет', 'mesh'],
-        zh: ['规模', '万亿', '1t', '联邦', '行星', '网格']
+        en: ['scale', 'trillion', '1t', 'federation', 'planetary', 'links space', 'intellectual'],
+        ru: ['масштаб', 'триллион', '1t', 'федерац', 'планет', 'links space', 'интеллект'],
+        zh: ['规模', '万亿', '1t', '联邦', '行星', 'links space', '智力']
+      }
+    },
+    {
+      id: 'intellectual-links',
+      nameKey: 'nav.intellectualLinks',
+      descKey: 'intellectual.title',
+      words: {
+        en: ['intellectual', 'nervous', 'neural', 'synapse', 'brain', 'mind', 'links', 'development', 'accelerate', 'product'],
+        ru: ['интеллект', 'нервн', 'нейрон', 'синапс', 'мозг', 'разработ', 'ускор', 'продукт'],
+        zh: ['智力', '神经', '神经网', '突触', '大脑', '开发', '加速', '产品']
       }
     },
     {
@@ -835,7 +845,7 @@
     wallets: 'кошельки',
     promo: 'промо',
     live: 'лайв',
-    mesh: 'меш-сеть',
+    'links space': 'links space',
     trigger: 'триггер',
     triggers: 'триггеры',
     rent: 'аренда',

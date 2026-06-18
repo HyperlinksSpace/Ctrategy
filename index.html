@@ -490,7 +490,7 @@
               <span class="phase-focus" data-i18n="roadmap.p1.focus">Earth · Prove the Runtime</span>
             </div>
             <h3 data-i18n="roadmap.p1.title">Protocol Bootstrap</h3>
-            <p data-i18n="roadmap.p1.desc">Deliver a capital-efficient field pilot: Rust/Zig runtime with embedded CRDTs, MQTT broker, and OPC UA bridge. Two paying sites, one offline-first 50-node mesh (drones + warehouse).</p>
+            <p data-i18n="roadmap.p1.desc">Deliver a capital-efficient field pilot: Rust/Zig runtime with embedded CRDTs, MQTT broker, and OPC UA bridge. Two paying sites, one offline-first 50-node Links Space (drones + warehouse).</p>
             <ul class="phase-actions">
               <li data-i18n="roadmap.p1.a1">Safety paths exit web UI—native binaries only</li>
               <li data-i18n="roadmap.p1.a2">Signed releases · air-gapped install kits</li>
@@ -522,7 +522,7 @@
               <span class="phase-focus" data-i18n="roadmap.p3.focus">Global · Standards Body</span>
             </div>
             <h3 data-i18n="roadmap.p3.title">Set the Reference Standard</h3>
-            <p data-i18n="roadmap.p3.desc">Publish connector, power-bus, and neuromorphic reference designs. OEM and robotics partners must implement Hyperlinks protocols to join the certified mesh.</p>
+            <p data-i18n="roadmap.p3.desc">Publish connector, power-bus, and neuromorphic reference designs. OEM and robotics partners must implement Hyperlinks protocols to join certified Links Space.</p>
             <ul class="phase-actions">
               <li data-i18n="roadmap.p3.a1">Open physical specs · certification program</li>
               <li data-i18n="roadmap.p3.a2">Patent portfolio on protocol-native silicon</li>
@@ -630,7 +630,7 @@
       <div class="revenue-grid">
         <div class="revenue-item"><strong data-i18n="revenue.r1t">Extraction</strong><span data-i18n="revenue.r1d">Assay clearing fees · provenance API · tamper-evident custody subscriptions</span></div>
         <div class="revenue-item"><strong data-i18n="revenue.r2t">Transport</strong><span data-i18n="revenue.r2d">Lane slot products · bonded handoffs · escrow on delayed delivery</span></div>
-        <div class="revenue-item"><strong data-i18n="revenue.r3t">Communication</strong><span data-i18n="revenue.r3d">AI Transmitter seats · private mesh coherence · RF backhaul metering</span></div>
+        <div class="revenue-item"><strong data-i18n="revenue.r3t">Communication</strong><span data-i18n="revenue.r3d">AI Transmitter seats · private Links Space coherence · RF backhaul metering</span></div>
         <div class="revenue-item"><strong data-i18n="revenue.r4t">Processing</strong><span data-i18n="revenue.r4d">TinyModel licenses · per-inference metering · automation runbooks</span></div>
         <div class="revenue-item"><strong data-i18n="revenue.r5t">Inhabitation</strong><span data-i18n="revenue.r5d">Digital twin hosting · HSP program software · governance retainers</span></div>
         <div class="revenue-item"><strong data-i18n="revenue.r6t">Expansion &amp; Repair</strong><span data-i18n="revenue.r6d">Replication playbooks · predictive maintenance · uptime SLA premiums</span></div>
@@ -662,196 +662,308 @@
       </div>
     </section>
 
-    <section id="genesis-mesh" class="section section-alt">
+    <section id="genesis-links" class="section section-alt">
       <div class="section-header">
-        <span class="section-tag" data-i18n="genesis.tag">08 · Protocol Mesh · Genesis</span>
+        <span class="section-tag" data-i18n="genesis.tag">08 · Links Space · Genesis</span>
         <h2 data-i18n="genesis.title">Genesis Node. Peer Replicas. No King.</h2>
-        <p class="section-desc" data-i18n="genesis.desc">Hyperlinks Space is built by a technical founder who commits code daily—not a pitch-deck hub. Authority comes from signed merges and protocol depth, not from a glowing orb. This is the social topology we run today and harden into the runtime.</p>
+        <p class="section-desc" data-i18n="genesis.desc">Hyperlinks Space is built by a technical founder who commits code daily—not a pitch-deck hub. Authority comes from signed merges and protocol depth, not from a glowing orb. This is the social topology we run today and harden into Links Space.</p>
       </div>
-      <div class="mesh-visual">
-        <div class="mesh-diagram mesh-diagram--genesis" role="img" data-i18n-aria="genesis.diagram.aria" aria-label="Genesis protocol mesh topology">
-          <svg class="mesh-edges" viewBox="0 0 720 420" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-            <line class="mesh-edge mesh-edge--sync" x1="360" y1="118" x2="200" y2="200"/>
-            <line class="mesh-edge mesh-edge--sync" x1="360" y1="118" x2="360" y2="210"/>
-            <line class="mesh-edge mesh-edge--sync" x1="360" y1="118" x2="520" y2="200"/>
-            <line class="mesh-edge mesh-edge--sync" x1="200" y1="200" x2="130" y2="290"/>
-            <line class="mesh-edge mesh-edge--sync" x1="200" y1="200" x2="280" y2="300"/>
-            <line class="mesh-edge mesh-edge--sync" x1="360" y1="210" x2="280" y2="300"/>
-            <line class="mesh-edge mesh-edge--sync" x1="360" y1="210" x2="440" y2="300"/>
-            <line class="mesh-edge mesh-edge--sync" x1="520" y1="200" x2="440" y2="300"/>
-            <line class="mesh-edge mesh-edge--sync" x1="520" y1="200" x2="590" y2="290"/>
-            <line class="mesh-edge mesh-edge--bidir" x1="280" y1="300" x2="440" y2="300"/>
-            <line class="mesh-edge mesh-edge--bridge" x1="130" y1="290" x2="590" y2="290"/>
-            <line class="mesh-edge mesh-edge--observe" x1="360" y1="118" x2="360" y2="48"/>
-            <line class="mesh-edge mesh-edge--private" x1="360" y1="118" x2="620" y2="88" stroke-dasharray="6 5"/>
+      <div class="links-visual">
+        <div class="links-diagram links-diagram--genesis" role="img" data-i18n-aria="genesis.diagram.aria" aria-label="Genesis Links Space topology">
+          <svg class="links-edges" viewBox="0 0 500 360" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <line class="links-edge links-edge--observe" x1="250" y1="52" x2="250" y2="98"/>
+            <line class="links-edge links-edge--sync" x1="250" y1="130" x2="88" y2="198"/>
+            <line class="links-edge links-edge--sync" x1="250" y1="130" x2="250" y2="205"/>
+            <line class="links-edge links-edge--sync" x1="250" y1="130" x2="412" y2="198"/>
+            <line class="links-edge links-edge--sync" x1="88" y1="198" x2="58" y2="288"/>
+            <line class="links-edge links-edge--sync" x1="88" y1="198" x2="148" y2="298"/>
+            <line class="links-edge links-edge--sync" x1="250" y1="205" x2="148" y2="298"/>
+            <line class="links-edge links-edge--sync" x1="250" y1="205" x2="352" y2="298"/>
+            <line class="links-edge links-edge--sync" x1="412" y1="198" x2="352" y2="298"/>
+            <line class="links-edge links-edge--sync" x1="412" y1="198" x2="442" y2="288"/>
+            <line class="links-edge links-edge--bidir" x1="148" y1="298" x2="352" y2="298"/>
+            <line class="links-edge links-edge--bridge" x1="58" y1="288" x2="442" y2="288"/>
+            <line class="links-edge links-edge--private" x1="250" y1="130" x2="418" y2="58" stroke-dasharray="6 5"/>
           </svg>
-          <div class="mesh-node mesh-node--observe" style="--mx:50%;--my:8%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.transmitter">AI TRANSMITTER</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.transmitterSub">Read-only observer</span>
-          </div>
-          <div class="mesh-node mesh-node--genesis" style="--mx:50%;--my:24%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.genesis">GENESIS · @anriltine</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.genesisSub">Root commit · signed releases</span>
-          </div>
-          <div class="mesh-node mesh-node--peer" style="--mx:22%;--my:44%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.runtime">RUNTIME SHARD</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.runtimeSub">Rust · MQTT · OPC UA · DTN</span>
-          </div>
-          <div class="mesh-node mesh-node--peer" style="--mx:50%;--my:46%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.crdt">CRDT ENGINE</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.crdtSub">Merge rights · domain owners</span>
-          </div>
-          <div class="mesh-node mesh-node--peer" style="--mx:78%;--my:44%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.hsp">HSP · REVENUE MESH</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.hspSub">Live product traffic</span>
-          </div>
-          <div class="mesh-node mesh-node--rnd" style="--mx:14%;--my:66%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.rnd">R&amp;D SUBNET</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.rndSub">Personal repos · upstream PRs</span>
-          </div>
-          <div class="mesh-node mesh-node--team" style="--mx:36%;--my:68%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.team">PEER REPLICAS</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.teamSub">Core team · equal node weight</span>
-          </div>
-          <div class="mesh-node mesh-node--team" style="--mx:64%;--my:68%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.tiny">TINYMODEL EDGE</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.tinySub">Partitioned inference shard</span>
-          </div>
-          <div class="mesh-node mesh-node--bridge" style="--mx:86%;--my:66%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.bridge">BRIDGE NODES</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.bridgeSub">Pilots · OEM · partners</span>
-          </div>
-          <div class="mesh-node mesh-node--private" style="--mx:88%;--my:16%;">
-            <span class="mesh-node-tag" data-i18n="genesis.node.offline">OFFLINE STORE</span>
-            <span class="mesh-node-label" data-i18n="genesis.node.offlineSub">Private persistence · DTN bundle</span>
+          <div class="links-grid links-grid--genesis">
+            <div class="links-node links-node--observe links-g-observe">
+              <span class="links-node-tag" data-i18n="genesis.node.transmitter">AI TRANSMITTER</span>
+              <span class="links-node-label" data-i18n="genesis.node.transmitterSub">Read-only observer</span>
+            </div>
+            <div class="links-node links-node--genesis links-g-genesis">
+              <span class="links-node-tag" data-i18n="genesis.node.genesis">GENESIS · @anriltine</span>
+              <span class="links-node-label" data-i18n="genesis.node.genesisSub">Root commit · signed releases</span>
+            </div>
+            <div class="links-node links-node--peer links-g-runtime">
+              <span class="links-node-tag" data-i18n="genesis.node.runtime">RUNTIME SHARD</span>
+              <span class="links-node-label" data-i18n="genesis.node.runtimeSub">Rust · MQTT · OPC UA · DTN</span>
+            </div>
+            <div class="links-node links-node--peer links-g-crdt">
+              <span class="links-node-tag" data-i18n="genesis.node.crdt">CRDT ENGINE</span>
+              <span class="links-node-label" data-i18n="genesis.node.crdtSub">Merge rights · domain owners</span>
+            </div>
+            <div class="links-node links-node--peer links-g-hsp">
+              <span class="links-node-tag" data-i18n="genesis.node.hsp">HSP · LINKS SPACE</span>
+              <span class="links-node-label" data-i18n="genesis.node.hspSub">Live product traffic</span>
+            </div>
+            <div class="links-node links-node--rnd links-g-rnd">
+              <span class="links-node-tag" data-i18n="genesis.node.rnd">R&amp;D SUBNET</span>
+              <span class="links-node-label" data-i18n="genesis.node.rndSub">Personal repos · upstream PRs</span>
+            </div>
+            <div class="links-node links-node--team links-g-team">
+              <span class="links-node-tag" data-i18n="genesis.node.team">PEER REPLICAS</span>
+              <span class="links-node-label" data-i18n="genesis.node.teamSub">Core team · equal node weight</span>
+            </div>
+            <div class="links-node links-node--team links-g-tiny">
+              <span class="links-node-tag" data-i18n="genesis.node.tiny">TINYMODEL EDGE</span>
+              <span class="links-node-label" data-i18n="genesis.node.tinySub">Partitioned inference shard</span>
+            </div>
+            <div class="links-node links-node--bridge links-g-bridge">
+              <span class="links-node-tag" data-i18n="genesis.node.bridge">BRIDGE NODES</span>
+              <span class="links-node-label" data-i18n="genesis.node.bridgeSub">Pilots · OEM · partners</span>
+            </div>
+            <div class="links-node links-node--private links-g-offline">
+              <span class="links-node-tag" data-i18n="genesis.node.offline">OFFLINE STORE</span>
+              <span class="links-node-label" data-i18n="genesis.node.offlineSub">Private persistence · DTN bundle</span>
+            </div>
           </div>
         </div>
-        <ul class="mesh-legend" aria-hidden="true">
-          <li><span class="mesh-legend-line mesh-legend-line--sync"></span><span data-i18n="genesis.legend.sync">Bidirectional merge stream</span></li>
-          <li><span class="mesh-legend-line mesh-legend-line--bridge"></span><span data-i18n="genesis.legend.bridge">Certified bridge ACL</span></li>
-          <li><span class="mesh-legend-line mesh-legend-line--private"></span><span data-i18n="genesis.legend.private">Private off-graph bundle</span></li>
+        <ul class="links-legend" aria-hidden="true">
+          <li><span class="links-legend-line links-legend-line--sync"></span><span data-i18n="genesis.legend.sync">Bidirectional merge stream</span></li>
+          <li><span class="links-legend-line links-legend-line--bridge"></span><span data-i18n="genesis.legend.bridge">Certified bridge ACL</span></li>
+          <li><span class="links-legend-line links-legend-line--private"></span><span data-i18n="genesis.legend.private">Private off-graph bundle</span></li>
+          <li><span class="links-legend-line links-legend-line--intellectual"></span><span data-i18n="genesis.legend.intellectual">Intellectual / semantic link</span></li>
         </ul>
       </div>
-      <div class="card-grid three mesh-cards">
+      <div class="card-grid four links-cards">
         <article class="card card-glow">
           <h3 data-i18n="genesis.c1.title">How Authority Works</h3>
           <p data-i18n="genesis.c1.text">Vsevolod Ignatyev (@anriltine) holds genesis provenance—the root hash every release chain traces to. Day-to-day decisions merge through CRDT domains: runtime, product, protocol. Veto applies only to security releases, not to every stand-up.</p>
         </article>
         <article class="card card-glow">
           <h3 data-i18n="genesis.c2.title">How People Map to Nodes</h3>
-          <p data-i18n="genesis.c2.text">Core engineers are peer replicas with full write rights in their shard. Partners enter as bridge nodes with scoped ACLs—not as owners of the mesh. Visitors and stargazers are QoS-0 subscribers: they receive telemetry, they do not mutate state.</p>
+          <p data-i18n="genesis.c2.text">Core engineers are peer replicas with full write rights in their shard. Partners enter as bridge nodes with scoped ACLs—not as owners of Links Space. Visitors and stargazers are QoS-0 subscribers: they receive telemetry, they do not mutate state.</p>
         </article>
         <article class="card card-glow">
           <h3 data-i18n="genesis.c3.title">What Must Never Recentralize</h3>
-          <p data-i18n="genesis.c3.text">AI Transmitter observes; it never routes power. The hero graph must not redraw a king-sized node. Revenue flows on the HSP mesh, not upward to charisma. Personal R&amp;D upstreams via PR—experiments do not die in private forks.</p>
+          <p data-i18n="genesis.c3.text">AI Transmitter observes; it never routes power. The hero graph must not redraw a king-sized node. Revenue flows through HSP on Links Space, not upward to charisma. Personal R&amp;D upstreams via PR—experiments do not die in private forks.</p>
+        </article>
+        <article class="card card-glow">
+          <h3 data-i18n="genesis.c4.title">How Nodes Interact Intellectually</h3>
+          <p data-i18n="genesis.c4.text">Links are not only bytes and merge ops—each node publishes typed intent: protocol specs, custody semantics, inference partitions, and OPC UA models. Peers reconcile meaning through CRDT domains before state settles; bridge nodes translate vendor dialects without collapsing them into a hub language. AI Transmitter reads this intellectual layer read-only; it never authors truth.</p>
         </article>
       </div>
-      <div class="mesh-mechanics">
+      <div class="links-mechanics">
         <h3 data-i18n="genesis.mechanics.title">Operating Mechanics</h3>
-        <ol class="mesh-mechanics-list">
+        <ol class="links-mechanics-list">
           <li><strong data-i18n="genesis.mechanics.m1t">Merge, not meeting.</strong> <span data-i18n="genesis.mechanics.m1b">Conflicts resolve by last-write-wins within domain shards—runtime, ledger product, field protocol—not by who speaks loudest in a room.</span></li>
           <li><strong data-i18n="genesis.mechanics.m2t">Upstream or expire.</strong> <span data-i18n="genesis.mechanics.m2b">Experiments in personal repos merge into HyperlinksSpace org within one phase, or they are archived. No permanent shadow hubs.</span></li>
-          <li><strong data-i18n="genesis.mechanics.m3t">Offline is first-class.</strong> <span data-i18n="genesis.mechanics.m3b">The private persistence layer (partner, home, rest) stores bundles when the founder disconnects. The mesh continues on last merged state.</span></li>
+          <li><strong data-i18n="genesis.mechanics.m3t">Offline is first-class.</strong> <span data-i18n="genesis.mechanics.m3b">The private persistence layer (partner, home, rest) stores bundles when the founder disconnects. Links Space continues on last merged state.</span></li>
           <li><strong data-i18n="genesis.mechanics.m4t">Observe, don’t orchestrate.</strong> <span data-i18n="genesis.mechanics.m4b">Web, Strategy site, and Telegram surfaces subscribe to truth—they are not in the safety path, matching the architecture section above.</span></li>
+          <li><strong data-i18n="genesis.mechanics.m5t">Meaning merges before muscle.</strong> <span data-i18n="genesis.mechanics.m5b">Runtime shards exchange signed protocol contracts and semantic bridges—not slideshows or DMs. When two nodes disagree on intent, the conflict resolves in the protocol domain, not in a private chat.</span></li>
         </ol>
       </div>
     </section>
 
-    <section id="scale-mesh" class="section">
+    <section id="scale-links" class="section">
       <div class="section-header">
-        <span class="section-tag" data-i18n="scale.tag">09 · Protocol Mesh · $1T Scale</span>
+        <span class="section-tag" data-i18n="scale.tag">09 · Links Space · $1T Scale</span>
         <h2 data-i18n="scale.title">Planetary Federation. Genesis Becomes Provenance.</h2>
-        <p class="section-desc" data-i18n="scale.desc">At trillion-dollar scale the company is not a org chart—it is a federated protocol namespace. Millions of nodes merge custody, telemetry, and compute across Earth industry, LEO relays, and lunar surface lines. The founder’s node shrinks visually; the mesh becomes the product.</p>
+        <p class="section-desc" data-i18n="scale.desc">At trillion-dollar scale the company is not a org chart—it is a federated protocol namespace. Millions of nodes merge custody, telemetry, and compute across Earth industry, LEO relays, and lunar surface lines. The founder’s node shrinks visually; Links Space becomes the product.</p>
       </div>
-      <div class="mesh-visual">
-        <div class="mesh-diagram mesh-diagram--scale" role="img" data-i18n-aria="scale.diagram.aria" aria-label="Trillion-dollar scale protocol federation">
-          <svg class="mesh-edges" viewBox="0 0 720 440" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-            <line class="mesh-edge mesh-edge--region" x1="120" y1="120" x2="280" y2="180"/>
-            <line class="mesh-edge mesh-edge--region" x1="280" y1="180" x2="360" y2="140"/>
-            <line class="mesh-edge mesh-edge--region" x1="360" y1="140" x2="520" y2="180"/>
-            <line class="mesh-edge mesh-edge--region" x1="520" y1="180" x2="600" y2="120"/>
-            <line class="mesh-edge mesh-edge--region" x1="280" y1="180" x2="200" y2="280"/>
-            <line class="mesh-edge mesh-edge--region" x1="360" y1="140" x2="360" y2="260"/>
-            <line class="mesh-edge mesh-edge--region" x1="520" y1="180" x2="520" y2="280"/>
-            <line class="mesh-edge mesh-edge--sync" x1="200" y1="280" x2="360" y2="260"/>
-            <line class="mesh-edge mesh-edge--sync" x1="360" y1="260" x2="520" y2="280"/>
-            <line class="mesh-edge mesh-edge--sync" x1="200" y1="280" x2="520" y2="280"/>
-            <line class="mesh-edge mesh-edge--observe" x1="360" y1="260" x2="360" y2="340"/>
-            <line class="mesh-edge mesh-edge--bridge" x1="120" y1="120" x2="600" y2="120"/>
-            <line class="mesh-edge mesh-edge--bridge" x1="200" y1="280" x2="200" y2="360"/>
-            <line class="mesh-edge mesh-edge--bridge" x1="520" y1="280" x2="520" y2="360"/>
+      <div class="links-visual">
+        <div class="links-diagram links-diagram--scale" role="img" data-i18n-aria="scale.diagram.aria" aria-label="Trillion-dollar scale protocol federation">
+          <svg class="links-edges" viewBox="0 0 500 380" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <line class="links-edge links-edge--region" x1="88" y1="72" x2="188" y2="128"/>
+            <line class="links-edge links-edge--region" x1="188" y1="128" x2="250" y2="92"/>
+            <line class="links-edge links-edge--region" x1="250" y1="92" x2="312" y2="128"/>
+            <line class="links-edge links-edge--region" x1="312" y1="128" x2="412" y2="72"/>
+            <line class="links-edge links-edge--region" x1="188" y1="128" x2="128" y2="218"/>
+            <line class="links-edge links-edge--region" x1="250" y1="92" x2="250" y2="218"/>
+            <line class="links-edge links-edge--region" x1="312" y1="128" x2="372" y2="218"/>
+            <line class="links-edge links-edge--sync" x1="128" y1="218" x2="250" y2="218"/>
+            <line class="links-edge links-edge--sync" x1="250" y1="218" x2="372" y2="218"/>
+            <line class="links-edge links-edge--sync" x1="128" y1="218" x2="372" y2="218"/>
+            <line class="links-edge links-edge--observe" x1="250" y1="218" x2="250" y2="298"/>
+            <line class="links-edge links-edge--bridge" x1="88" y1="72" x2="412" y2="72"/>
+            <line class="links-edge links-edge--bridge" x1="128" y1="218" x2="128" y2="318"/>
+            <line class="links-edge links-edge--bridge" x1="372" y1="218" x2="372" y2="318"/>
           </svg>
-          <div class="mesh-node mesh-node--region" style="--mx:14%;--my:22%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.earth">EARTH INDUSTRIAL</span>
-            <span class="mesh-node-label" data-i18n="scale.node.earthSub">10M+ factory &amp; field nodes</span>
-          </div>
-          <div class="mesh-node mesh-node--region" style="--mx:50%;--my:28%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.leo">LEO RELAY FABRIC</span>
-            <span class="mesh-node-label" data-i18n="scale.node.leoSub">DTN bundle routers · handoffs</span>
-          </div>
-          <div class="mesh-node mesh-node--region" style="--mx:86%;--my:22%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.lunar">LUNAR · CIS-LUNAR</span>
-            <span class="mesh-node-label" data-i18n="scale.node.lunarSub">ISRU lines · freight ledger</span>
-          </div>
-          <div class="mesh-node mesh-node--shard" style="--mx:24%;--my:58%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.custody">CUSTODY CRDT</span>
-            <span class="mesh-node-label" data-i18n="scale.node.custodySub">Physical asset graph</span>
-          </div>
-          <div class="mesh-node mesh-node--shard" style="--mx:50%;--my:54%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.compute">EDGE COMPUTE MESH</span>
-            <span class="mesh-node-label" data-i18n="scale.node.computeSub">TinyModel partitions · metering</span>
-          </div>
-          <div class="mesh-node mesh-node--shard" style="--mx:76%;--my:58%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.semantic">OPC UA SEMANTIC</span>
-            <span class="mesh-node-label" data-i18n="scale.node.semanticSub">OEM-agnostic state bridge</span>
-          </div>
-          <div class="mesh-node mesh-node--genesis-sm" style="--mx:26%;--my:78%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.genesis">GENESIS MARKER</span>
-            <span class="mesh-node-label" data-i18n="scale.node.genesisSub">Provenance only · same size as peers</span>
-          </div>
-          <div class="mesh-node mesh-node--observe" style="--mx:50%;--my:72%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.observe">OBSERVER PLANE</span>
-            <span class="mesh-node-label" data-i18n="scale.node.observeSub">Consoles · regulators · AI read-only</span>
-          </div>
-          <div class="mesh-node mesh-node--bridge" style="--mx:74%;--my:78%;">
-            <span class="mesh-node-tag" data-i18n="scale.node.sovereign">SOVEREIGN BRIDGES</span>
-            <span class="mesh-node-label" data-i18n="scale.node.sovereignSub">Defense · energy · space agencies</span>
+          <div class="links-grid links-grid--scale">
+            <div class="links-node links-node--region links-s-earth">
+              <span class="links-node-tag" data-i18n="scale.node.earth">EARTH INDUSTRIAL</span>
+              <span class="links-node-label" data-i18n="scale.node.earthSub">10M+ factory &amp; field nodes</span>
+            </div>
+            <div class="links-node links-node--region links-s-leo">
+              <span class="links-node-tag" data-i18n="scale.node.leo">LEO RELAY · LINKS SPACE</span>
+              <span class="links-node-label" data-i18n="scale.node.leoSub">DTN bundle routers · handoffs</span>
+            </div>
+            <div class="links-node links-node--region links-s-lunar">
+              <span class="links-node-tag" data-i18n="scale.node.lunar">LUNAR · CIS-LUNAR</span>
+              <span class="links-node-label" data-i18n="scale.node.lunarSub">ISRU lines · freight ledger</span>
+            </div>
+            <div class="links-node links-node--shard links-s-custody">
+              <span class="links-node-tag" data-i18n="scale.node.custody">CUSTODY CRDT</span>
+              <span class="links-node-label" data-i18n="scale.node.custodySub">Physical asset graph</span>
+            </div>
+            <div class="links-node links-node--shard links-s-compute">
+              <span class="links-node-tag" data-i18n="scale.node.compute">EDGE COMPUTE · LINKS SPACE</span>
+              <span class="links-node-label" data-i18n="scale.node.computeSub">TinyModel partitions · metering</span>
+            </div>
+            <div class="links-node links-node--shard links-s-semantic">
+              <span class="links-node-tag" data-i18n="scale.node.semantic">OPC UA SEMANTIC</span>
+              <span class="links-node-label" data-i18n="scale.node.semanticSub">OEM-agnostic state bridge</span>
+            </div>
+            <div class="links-node links-node--genesis-sm links-s-genesis">
+              <span class="links-node-tag" data-i18n="scale.node.genesis">GENESIS MARKER</span>
+              <span class="links-node-label" data-i18n="scale.node.genesisSub">Provenance only · same size as peers</span>
+            </div>
+            <div class="links-node links-node--observe links-s-observe">
+              <span class="links-node-tag" data-i18n="scale.node.observe">OBSERVER PLANE</span>
+              <span class="links-node-label" data-i18n="scale.node.observeSub">Consoles · regulators · AI read-only</span>
+            </div>
+            <div class="links-node links-node--bridge links-s-sovereign">
+              <span class="links-node-tag" data-i18n="scale.node.sovereign">SOVEREIGN BRIDGES</span>
+              <span class="links-node-label" data-i18n="scale.node.sovereignSub">Defense · energy · space agencies</span>
+            </div>
           </div>
         </div>
-        <ul class="mesh-legend" aria-hidden="true">
-          <li><span class="mesh-legend-line mesh-legend-line--region"></span><span data-i18n="scale.legend.region">Regional federation shard</span></li>
-          <li><span class="mesh-legend-line mesh-legend-line--sync"></span><span data-i18n="scale.legend.sync">Cross-shard CRDT merge</span></li>
-          <li><span class="mesh-legend-line mesh-legend-line--bridge"></span><span data-i18n="scale.legend.bridge">Sovereign &amp; OEM bridge ACL</span></li>
+        <ul class="links-legend" aria-hidden="true">
+          <li><span class="links-legend-line links-legend-line--region"></span><span data-i18n="scale.legend.region">Regional federation shard</span></li>
+          <li><span class="links-legend-line links-legend-line--sync"></span><span data-i18n="scale.legend.sync">Cross-shard CRDT merge</span></li>
+          <li><span class="links-legend-line links-legend-line--bridge"></span><span data-i18n="scale.legend.bridge">Sovereign &amp; OEM bridge ACL</span></li>
+          <li><span class="links-legend-line links-legend-line--intellectual"></span><span data-i18n="scale.legend.intellectual">Cross-shard semantic link</span></li>
         </ul>
       </div>
-      <div class="card-grid three mesh-cards">
+      <div class="card-grid four links-cards">
         <article class="card card-glow">
           <h3 data-i18n="scale.c1.title">From Startup to Infrastructure</h3>
           <p data-i18n="scale.c1.text">Phase 1–2: genesis node plus dozens of peer replicas. Phase 3–4: certified bridge nodes (OEM, defense, energy) attach without acquiring the core. At $1T the Hyperlinks namespace is like DNS or MQTT itself—vendors implement the contract; no single office holds the graph.</p>
         </article>
         <article class="card card-glow">
           <h3 data-i18n="scale.c2.title">Revenue at Scale</h3>
-          <p data-i18n="scale.c2.text">Metering moves to the edges: freight slots, custody proofs, inference watt-hours, semantic bridge seats. HSP remains a production mesh, one console among many. Swap volume funds early R&amp;D; industrial and cis-lunar contracts dominate at scale.</p>
+          <p data-i18n="scale.c2.text">Metering moves to the edges: freight slots, custody proofs, inference watt-hours, semantic bridge seats. HSP remains production Links Space—one console among many. Swap volume funds early R&amp;D; industrial and cis-lunar contracts dominate at scale.</p>
         </article>
         <article class="card card-glow">
           <h3 data-i18n="scale.c3.title">Founder Role at $1T</h3>
           <p data-i18n="scale.c3.text">@anriltine stops being the brightest node and becomes root provenance plus standards chair—still committing protocol specs, not running every merge. Technical depth remains the moat; charisma does not scale to a planet.</p>
         </article>
+        <article class="card card-glow">
+          <h3 data-i18n="scale.c4.title">Planetary Intellectual Federation</h3>
+          <p data-i18n="scale.c4.text">At $1T scale, millions of nodes share custody graphs, freight ledgers, and TinyModel partitions—and interoperable knowledge: standards councils publish co-signed spec bundles; sovereign bridges map national taxonomies into the Hyperlinks namespace without erasing local meaning. The intellectual layer scales because it is merge-native, not meeting-native.</p>
+        </article>
       </div>
-      <div class="mesh-mechanics">
+      <div class="links-mechanics">
         <h3 data-i18n="scale.mechanics.title">Scale Invariants (What Survives to $1T)</h3>
-        <ol class="mesh-mechanics-list">
+        <ol class="links-mechanics-list">
           <li><strong data-i18n="scale.mechanics.m1t">No recentralization events.</strong> <span data-i18n="scale.mechanics.m1b">Every UI generation must stay read-only. Consoles that can kill a factory line are forbidden in the fault path.</span></li>
           <li><strong data-i18n="scale.mechanics.m2t">Merge latency beats HQ latency.</strong> <span data-i18n="scale.mechanics.m2b">A warehouse in São Paulo and a relay in LEO reconcile without waiting for a headquarters decision.</span></li>
           <li><strong data-i18n="scale.mechanics.m3t">Bridges, not acquisitions.</strong> <span data-i18n="scale.mechanics.m3b">Sovereign and OEM partners join via certified adapters—same pattern as OPC UA today, extended to custody and DTN.</span></li>
           <li><strong data-i18n="scale.mechanics.m4t">Genesis trust decays gracefully.</strong> <span data-i18n="scale.mechanics.m4b">New releases can be co-signed by standards council peers; root hash remains audit trail, not live bottleneck.</span></li>
+          <li><strong data-i18n="scale.mechanics.m5t">No dialect monopoly.</strong> <span data-i18n="scale.mechanics.m5b">OEM, defense, and cis-lunar partners keep local ontologies; certified bridges carry translations, not replacements. A factory in São Paulo and a lunar ISRU line can agree on custody without sharing one ERP vocabulary.</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="intellectual-links" class="section section-alt">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="intellectual.tag">10 · Intellectual Links · Nervous System</span>
+        <h2 data-i18n="intellectual.title">The Company Nervous System. Online. Productized.</h2>
+        <p class="section-desc" data-i18n="intellectual.desc">Hyperlinks Space does not run on slide decks—it runs on the intellectual connections between people: shared models, fast mutual understanding, and trust that survives offline gaps. We reproduce that nervous system online in Links Space, harden the paths into protocol, and ship the same links as products that fund the next cycle of development.</p>
+      </div>
+      <div class="links-visual">
+        <div class="links-diagram links-diagram--neural" role="img" data-i18n-aria="intellectual.diagram.aria" aria-label="Intellectual Links nervous system pipeline">
+          <svg class="links-edges" viewBox="0 0 320 420" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <line class="links-edge links-edge--intellectual" x1="160" y1="58" x2="160" y2="98"/>
+            <line class="links-edge links-edge--sync" x1="160" y1="128" x2="160" y2="168"/>
+            <line class="links-edge links-edge--bidir" x1="160" y1="198" x2="160" y2="238"/>
+            <line class="links-edge links-edge--sync" x1="160" y1="268" x2="160" y2="308"/>
+            <line class="links-edge links-edge--observe" x1="160" y1="338" x2="160" y2="378"/>
+            <line class="links-edge links-edge--intellectual" x1="72" y1="58" x2="248" y2="58"/>
+          </svg>
+          <div class="links-grid links-grid--neural">
+            <div class="links-node links-node--team links-n-minds">
+              <span class="links-node-tag" data-i18n="intellectual.node.minds">PEER MINDS</span>
+              <span class="links-node-label" data-i18n="intellectual.node.mindsSub">Shared models · mutual trust · fast comprehension</span>
+            </div>
+            <div class="links-node links-node--peer links-n-partner">
+              <span class="links-node-tag" data-i18n="intellectual.node.partner">PARTNER CORTEX</span>
+              <span class="links-node-label" data-i18n="intellectual.node.partnerSub">Scoped bridge · translated intent · no hub dialect</span>
+            </div>
+            <div class="links-node links-node--genesis links-n-synapse">
+              <span class="links-node-tag" data-i18n="intellectual.node.synapse">SYNAPTIC MERGE</span>
+              <span class="links-node-label" data-i18n="intellectual.node.synapseSub">CRDT domains · PR upstream · spec bundles</span>
+            </div>
+            <div class="links-node links-node--shard links-n-myelin">
+              <span class="links-node-tag" data-i18n="intellectual.node.myelin">MYELINATED PATHS</span>
+              <span class="links-node-label" data-i18n="intellectual.node.myelinSub">Signed releases · hardened runtime · repeat velocity</span>
+            </div>
+            <div class="links-node links-node--rnd links-n-motor">
+              <span class="links-node-tag" data-i18n="intellectual.node.motor">MOTOR OUTPUT</span>
+              <span class="links-node-label" data-i18n="intellectual.node.motorSub">Shipped binaries · field pilots · revenue loops</span>
+            </div>
+            <div class="links-node links-node--observe links-n-observe">
+              <span class="links-node-tag" data-i18n="intellectual.node.observe">AI TRANSMITTER</span>
+              <span class="links-node-label" data-i18n="intellectual.node.observeSub">Read-only EEG · never authors truth</span>
+            </div>
+          </div>
+        </div>
+        <ul class="links-legend" aria-hidden="true">
+          <li><span class="links-legend-line links-legend-line--intellectual"></span><span data-i18n="intellectual.legend.intellectual">Intellectual / synaptic link</span></li>
+          <li><span class="links-legend-line links-legend-line--sync"></span><span data-i18n="intellectual.legend.protocol">Protocol myelination</span></li>
+          <li><span class="links-legend-line links-legend-line--observe"></span><span data-i18n="intellectual.legend.observe">Observer plane</span></li>
+        </ul>
+      </div>
+      <div class="card-grid three intellectual-cards">
+        <article class="card card-glow">
+          <h3 data-i18n="intellectual.c1.title">Biological Layer: People</h3>
+          <p data-i18n="intellectual.c1.text">Inside the company, development accelerates when engineers, partners, and the founder share mental models faster than org charts allow—like a nervous system where synapses fire in parallel, not through a single throat microphone. That speed is the real R&amp;D asset; everything else is packaging.</p>
+        </article>
+        <article class="card card-glow">
+          <h3 data-i18n="intellectual.c2.title">Digital Layer: Links Space</h3>
+          <p data-i18n="intellectual.c2.text">We reproduce those connections online: typed intent, semantic bridges, and merge-native spec flows replace hallway consensus. Links Space is the extruded nervous system—persistent, auditable, offline-tolerant—so intellectual velocity survives time zones, disconnects, and scale.</p>
+        </article>
+        <article class="card card-glow">
+          <h3 data-i18n="intellectual.c3.title">Commercial Layer: Products</h3>
+          <p data-i18n="intellectual.c3.text">The same links that speed our builds become what customers buy: HSP for coordinated economic action, AI Transmitter seats for read-only coherence, semantic bridge licenses, and TinyModel partitions for collective inference. Profit is not separate from the neural layer—it is how we fund faster synapses.</p>
+        </article>
+      </div>
+      <div class="intellectual-products">
+        <h3 data-i18n="intellectual.products.title">Intellectual Links → Revenue Surfaces</h3>
+        <div class="card-grid four">
+          <article class="product-card product-card--compact">
+            <h4 data-i18n="intellectual.products.p1t">HSP</h4>
+            <p data-i18n="intellectual.products.p1d">Social-intellectual coordination plus swaps, escrow, and ledger coherence—motor cortex for economic action.</p>
+          </article>
+          <article class="product-card product-card--compact">
+            <h4 data-i18n="intellectual.products.p2t">AI Transmitter</h4>
+            <p data-i18n="intellectual.products.p2d">Read-only neural observer across chain, ERP, and RF—EEG for operators, never the autonomic nervous system.</p>
+          </article>
+          <article class="product-card product-card--compact">
+            <h4 data-i18n="intellectual.products.p3t">Semantic Bridges</h4>
+            <p data-i18n="intellectual.products.p3d">OPC UA and custody translation seats—synapses between vendor dialects without erasing local meaning.</p>
+          </article>
+          <article class="product-card product-card--compact">
+            <h4 data-i18n="intellectual.products.p4t">TinyModel Edge</h4>
+            <p data-i18n="intellectual.products.p4d">Partitioned collective inference—distributed cortical compute metered at the gateway.</p>
+          </article>
+        </div>
+      </div>
+      <div class="links-mechanics">
+        <h3 data-i18n="intellectual.mechanics.title">How Intellectual Links Accelerate Development</h3>
+        <ol class="links-mechanics-list">
+          <li><strong data-i18n="intellectual.mechanics.m1t">Synaptic speed beats meeting latency.</strong> <span data-i18n="intellectual.mechanics.m1b">Ideas merge in protocol domains overnight; stand-ups confirm state, they do not author it. Development cycles compress because comprehension is replicated, not re-explained.</span></li>
+          <li><strong data-i18n="intellectual.mechanics.m2t">Myelin is shipped protocol.</strong> <span data-i18n="intellectual.mechanics.m2b">Every signed release wraps a once-fragile intellectual path in runtime muscle memory. The second pilot installs faster than the first because the nervous path is already insulated.</span></li>
+          <li><strong data-i18n="intellectual.mechanics.m3t">Plasticity without reorg.</strong> <span data-i18n="intellectual.mechanics.m3b">CRDT shards and bridge ACLs let new partners plug in new cortical regions without rewiring the core team graph or recentralizing decisions.</span></li>
+          <li><strong data-i18n="intellectual.mechanics.m4t">Observe, never possess.</strong> <span data-i18n="intellectual.mechanics.m4b">AI Transmitter and Strategy surfaces read the intellectual layer; they do not own it. The nervous system stays peer-native—observers subscribe, peers merge.</span></li>
+          <li><strong data-i18n="intellectual.mechanics.m5t">Export the same links you run on.</strong> <span data-i18n="intellectual.mechanics.m5b">Customers buy coherence products built from the links we use internally. Internal intellectual velocity and external ARR share one protocol stack—no shadow nervous system for sales.</span></li>
         </ol>
       </div>
     </section>
 
     <section id="north-star" class="section section-north-star">
       <div class="north-star-content">
-        <span class="section-tag" data-i18n="north.tag">10 · North Star</span>
+        <span class="section-tag" data-i18n="north.tag">11 · North Star</span>
         <h2 data-i18n="north.title">Milestones We Publish Against</h2>
         <blockquote data-i18n="north.quote">Hyperlinks Space is the infrastructure layer that coordinates industry on Earth, freight and compute in cis-lunar space, and the protocols that bind both domains under one custody model.</blockquote>
         <div class="north-milestones">
@@ -879,9 +991,10 @@
       <a href="#architecture" class="section-chip" data-section-id="architecture"><span lang="en">05</span><span data-i18n="nav.architecture">Architecture</span></a>
       <a href="#revenue" class="section-chip" data-section-id="revenue"><span lang="en">06</span><span data-i18n="nav.revenue">Revenue</span></a>
       <a href="#moats" class="section-chip" data-section-id="moats"><span lang="en">07</span><span data-i18n="nav.moats">Moats</span></a>
-      <a href="#genesis-mesh" class="section-chip" data-section-id="genesis-mesh"><span lang="en">08</span><span data-i18n="nav.genesisMesh">Genesis Mesh</span></a>
-      <a href="#scale-mesh" class="section-chip" data-section-id="scale-mesh"><span lang="en">09</span><span data-i18n="nav.scaleMesh">$1T Mesh</span></a>
-      <a href="#north-star" class="section-chip" data-section-id="north-star"><span lang="en">10</span><span data-i18n="nav.northStar">North Star</span></a>
+      <a href="#genesis-links" class="section-chip" data-section-id="genesis-links"><span lang="en">08</span><span data-i18n="nav.genesisLinks">Genesis · Links Space</span></a>
+      <a href="#scale-links" class="section-chip" data-section-id="scale-links"><span lang="en">09</span><span data-i18n="nav.scaleLinks">$1T Links Space</span></a>
+      <a href="#intellectual-links" class="section-chip" data-section-id="intellectual-links"><span lang="en">10</span><span data-i18n="nav.intellectualLinks">Intellectual Links</span></a>
+      <a href="#north-star" class="section-chip" data-section-id="north-star"><span lang="en">11</span><span data-i18n="nav.northStar">North Star</span></a>
     </div>
   </nav>
 

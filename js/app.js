@@ -225,7 +225,7 @@
   function initSectionSpy() {
     var sectionIds = [
       'vision', 'pillars', 'earth-space', 'roadmap',
-      'architecture', 'revenue', 'moats', 'genesis-mesh', 'scale-mesh', 'north-star'
+      'architecture', 'revenue', 'moats', 'genesis-links', 'scale-links', 'intellectual-links', 'north-star'
     ];
     var links = document.querySelectorAll('.section-chip[data-section-id]');
     var strip = document.querySelector('.section-strip');
