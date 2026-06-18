@@ -77,9 +77,9 @@
   function scheduleIdleLoad() {
     var run = function () { loadAiStack(); };
     if (window.requestIdleCallback) {
-      requestIdleCallback(run, { timeout: 3500 });
+      requestIdleCallback(run, { timeout: 6000 });
     } else {
-      setTimeout(run, 2500);
+      setTimeout(run, 4000);
     }
   }
 

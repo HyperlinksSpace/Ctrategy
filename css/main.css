@@ -9,8 +9,8 @@
   --accent-amber: #fbbf24;
   --accent-green: var(--brand-green);
   --accent-rose: var(--brand-magenta);
-  --font-display: 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-display: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --radius: 12px;
   --radius-lg: 20px;
   --header-h: 72px;
