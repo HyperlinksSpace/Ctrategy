@@ -779,10 +779,9 @@
   animation-duration: calc(var(--orb-reactive-speed, 1) * 12s) !important;
 }
 
-/* Mic debug overlay — logo green HUD on stratviz stage */
+/* Mic debug overlay — subtle watermark on stratviz stage */
 .stratviz-mic-debug {
-  --mic-debug-green: color-mix(in srgb, var(--brand-green-display) 92%, transparent);
-  --mic-debug-green-glow: color-mix(in srgb, var(--brand-green-solid) 42%, transparent);
+  --mic-debug-green: color-mix(in srgb, var(--brand-green-display) 48%, transparent);
   position: absolute;
   inset: 0;
   z-index: 12;
@@ -790,15 +789,11 @@
   flex-direction: column;
   padding: 10px 12px 12px;
   pointer-events: none;
-  background:
-    linear-gradient(168deg, color-mix(in srgb, var(--brand-green-solid) 10%, transparent) 0%, transparent 42%),
-    linear-gradient(0deg, color-mix(in srgb, hsl(234, 42%, 4%) 72%, transparent), color-mix(in srgb, hsl(234, 42%, 4%) 38%, transparent));
-  backdrop-filter: blur(2px);
+  background: transparent;
 }
 
 .stratviz-mic-debug.is-active {
   display: flex;
-  pointer-events: auto;
 }
 
 .stratviz-mic-debug-copy {
@@ -809,50 +804,54 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--brand-green-display) 48%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--brand-green-solid) 14%, transparent);
+  border: none;
+  border-radius: 6px;
+  background: transparent;
   color: var(--mic-debug-green);
+  opacity: 0.34;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
-  box-shadow: 0 0 14px color-mix(in srgb, var(--brand-green-solid) 22%, transparent);
+  pointer-events: auto;
+  transition: opacity 0.2s ease, color 0.2s ease, transform 0.15s ease;
 }
 
 .stratviz-mic-debug-copy:hover {
-  color: var(--brand-green-display);
-  border-color: color-mix(in srgb, var(--brand-green-display) 72%, transparent);
-  background: color-mix(in srgb, var(--brand-green-solid) 24%, transparent);
+  opacity: 0.62;
+  color: color-mix(in srgb, var(--brand-green-display) 68%, transparent);
   transform: translateY(-1px);
 }
 
 .stratviz-mic-debug-copy:active { transform: translateY(0); }
 
 .stratviz-mic-debug-copy.is-copied {
-  color: var(--brand-green-display);
-  border-color: color-mix(in srgb, var(--brand-green-display) 85%, transparent);
+  opacity: 0.72;
+  color: color-mix(in srgb, var(--brand-green-display) 78%, transparent);
 }
 
 .stratviz-mic-debug-list {
   flex: 1;
   min-height: 0;
-  margin-top: 34px;
+  margin-top: 28px;
   overflow: auto;
   overflow-x: hidden;
-  font: 500 clamp(9px, 1.05vw, 11px) / 1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 500 clamp(8px, 0.95vw, 10px) / 1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.02em;
   color: var(--mic-debug-green);
-  text-shadow: 0 0 10px var(--mic-debug-green-glow);
+  opacity: 0.46;
+  text-shadow: none;
+  pointer-events: none;
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--brand-green-display) 35%, transparent) transparent;
+  scrollbar-color: color-mix(in srgb, var(--brand-green-display) 18%, transparent) transparent;
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 88%, transparent 100%);
 }
 
-.stratviz-mic-debug-list::-webkit-scrollbar { width: 5px; }
+.stratviz-mic-debug-list::-webkit-scrollbar { width: 4px; }
 
 .stratviz-mic-debug-list::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--brand-green-display) 40%, transparent);
+  background: color-mix(in srgb, var(--brand-green-display) 22%, transparent);
   border-radius: 999px;
 }
 
@@ -860,32 +859,30 @@
   padding: 1px 0;
   white-space: pre-wrap;
   word-break: break-word;
-  opacity: 0.94;
 }
 
 .stratviz-mic-debug-line--warn {
-  color: color-mix(in srgb, #f0d878 88%, var(--brand-green-display) 12%);
-  opacity: 1;
+  color: color-mix(in srgb, #e8c860 52%, var(--brand-green-display) 48%);
+  opacity: 0.58;
 }
 
 .stratviz-mic-debug-line--error {
-  color: color-mix(in srgb, #f0a0a0 86%, var(--brand-green-display) 14%);
-  opacity: 1;
+  color: color-mix(in srgb, #e8a0a0 50%, var(--brand-green-display) 50%);
+  opacity: 0.58;
 }
 
 @media (max-width: 768px) {
   .stratviz-mic-debug { padding: 8px 10px 10px; }
-  .stratviz-mic-debug-copy { top: 8px; right: 8px; width: 28px; height: 28px; }
-  .stratviz-mic-debug-list { margin-top: 30px; font-size: 9px; line-height: 1.42; }
-}
-
-[data-theme="light"] .stratviz-mic-debug {
-  background:
-    linear-gradient(168deg, color-mix(in srgb, var(--brand-green-display) 8%, transparent) 0%, transparent 46%),
-    linear-gradient(0deg, color-mix(in srgb, #f4f7f4 78%, transparent), color-mix(in srgb, #f4f7f4 42%, transparent));
+  .stratviz-mic-debug-copy { top: 8px; right: 8px; width: 26px; height: 26px; opacity: 0.38; }
+  .stratviz-mic-debug-list { margin-top: 24px; font-size: 8px; line-height: 1.4; opacity: 0.42; }
 }
 
 [data-theme="light"] .stratviz-mic-debug-copy {
-  background: color-mix(in srgb, var(--brand-green-display) 10%, white);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--brand-green-display) 16%, transparent);
+  opacity: 0.32;
+  color: color-mix(in srgb, var(--brand-green-solid) 55%, transparent);
+}
+
+[data-theme="light"] .stratviz-mic-debug-list {
+  opacity: 0.4;
+  color: color-mix(in srgb, var(--brand-green-solid) 52%, transparent);
 }

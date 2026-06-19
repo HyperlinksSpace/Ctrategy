@@ -204,6 +204,7 @@
   var micFailureRebuilds = 0;
   var MIC_RESTART_MIN_MS = 1000;
   var MIC_MAX_FAILURE_REBUILDS = 2;
+  var MIC_POST_SPEECH_MS = 1400;
   var recognitionFailCount = 0;
   var micNoSpeechCount = 0;
   var micStopReason = '';
@@ -226,7 +227,7 @@
     monitorAttempted: false
   };
 
-  var MIC_BUILD = '20250616d';
+  var MIC_BUILD = '20250616e';
   var MIC_DEBUG_KEY = 'hls-mic-debug';
   var MIC_LOG_MAX = 200;
   var MIC_LOG_ALWAYS = {
@@ -657,7 +658,7 @@
       if (result.ok && result.text) {
         showBotMessage(result.text, {
           speakText: result.text,
-          onDone: maybeAutoStartMic
+          onDone: micAutoStartAfterSpeech
         });
         return;
       }
@@ -1365,7 +1366,7 @@
 
     function afterSpeech() {
       if (opts.onDone) opts.onDone();
-      else maybeAutoStartMic();
+      else micAutoStartAfterSpeech();
     }
 
     function finish() {
@@ -1393,6 +1394,28 @@
       speakText: tVoice(key, vars),
       onDone: done
     });
+  }
+
+  function sayBotSilent(key, vars, done) {
+    showBotMessage(t(key, vars), {
+      speak: false,
+      instant: true,
+      onDone: done
+    });
+  }
+
+  function micAutoStartAfterSpeech() {
+    if (!micIsEnabled()) return;
+    var attempts = 0;
+    (function wait() {
+      var syn = window.speechSynthesis;
+      if (syn && (syn.speaking || syn.pending) && attempts < 50) {
+        attempts += 1;
+        window.setTimeout(wait, 50);
+        return;
+      }
+      scheduleMicAutoStart(MIC_POST_SPEECH_MS);
+    })();
   }
 
   function isSpeechInterruptError(event) {
@@ -1510,6 +1533,7 @@
       }
 
       stopSpeech();
+      if (state.listening || state.micStarting) stopListening(true);
       ensureSpeechVoices();
 
       var uiLang = opts.lang || getLang();
@@ -1640,7 +1664,7 @@
     (function poll() {
       var syn = window.speechSynthesis;
       if (!syn || (!syn.speaking && !syn.pending) || attempts > 30) {
-        window.setTimeout(done, attempts > 0 ? 150 : 80);
+        window.setTimeout(done, attempts > 0 ? 350 : 200);
         return;
       }
       attempts += 1;
@@ -1747,14 +1771,15 @@
   }
 
   function scheduleMicAutoStart(delay) {
-    clearMicAutoStartTimer();
+    if (micAutoStartTimer) return;
     if (!micIsEnabled() || micPausedByFailure || micRecEnding) return;
     if (micRestartTimer || micStartDelayTimer) return;
-    micLog('debug', 'autoStart.scheduled', { delay: delay == null ? 500 : delay });
+    var wait = delay == null ? 500 : delay;
+    micLog('debug', 'autoStart.scheduled', { delay: wait });
     micAutoStartTimer = window.setTimeout(function () {
       micAutoStartTimer = 0;
       maybeAutoStartMic();
-    }, delay == null ? 500 : delay);
+    }, wait);
   }
 
   function setMicAutoStart(enabled, persist) {
@@ -2123,8 +2148,9 @@
           });
           if (micNoSpeechCount >= 2 && !micNoVoiceHintShown) {
             micNoVoiceHintShown = true;
-            sayBot('ai.micNoVoice');
-            scheduleMicRestart(2800, 'no-speech');
+            sayBotSilent('ai.micNoVoice', null, function () {
+              scheduleMicRestart(1200, 'no-speech');
+            });
             return;
           }
         } else if (micNoSpeechCount >= 5) {
@@ -2256,7 +2282,9 @@
     micRecGen += 1;
     var gen = micRecGen;
     var recognition = new SR();
-    recognition.continuous = true;
+    var winDesktop = /Windows/i.test(navigator.userAgent || '') &&
+      !/Windows Phone/i.test(navigator.userAgent || '');
+    recognition.continuous = !winDesktop;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     attachRecognitionHandlers(recognition, gen);
@@ -2575,7 +2603,9 @@
     }
     if (micBusy()) {
       micLog('debug', 'auto.defer', { busyReasons: micBusyReasons() });
-      scheduleMicAutoStart(speechActive() ? 900 : 500);
+      if (!micAutoStartTimer) {
+        scheduleMicAutoStart(speechActive() ? MIC_POST_SPEECH_MS : 700);
+      }
       return;
     }
     micLog('debug', 'auto.startListening', null);
@@ -3190,7 +3220,7 @@
       state.ready = true;
       showBotMessage(t('ai.greeting'), {
         speakText: tVoice('ai.greeting'),
-        onDone: maybeAutoStartMic
+        onDone: micAutoStartAfterSpeech
       });
       bootstrapMic();
     }, state.reducedMotion ? 100 : 600);
@@ -3210,7 +3240,7 @@
         if (state.messagesEl) state.messagesEl.innerHTML = '';
         showBotMessage(t('ai.greeting'), {
           speakText: tVoice('ai.greeting'),
-          onDone: maybeAutoStartMic
+          onDone: micAutoStartAfterSpeech
         });
       }
       state.lastLang = now;
