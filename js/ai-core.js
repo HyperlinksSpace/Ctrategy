@@ -128,7 +128,7 @@
 
   var TOUR_WORDS = {
     en: ['tour', 'walk me', 'show all', 'everything', 'quick tour'],
-    ru: ['тур', 'покажи вс', 'обойди', 'все раздел'],
+    ru: ['экскурс', 'тур', 'покажи вс', 'обойди', 'все раздел'],
     zh: ['导览', ' tour', '全部', '所有章节', '快速']
   };
 
@@ -329,6 +329,14 @@
     };
   }
 
+  function micDebugIsCompact() {
+    return !!(window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+  }
+
+  function micDebugMaxLines() {
+    return micDebugIsCompact() ? 10 : 14;
+  }
+
   function micDebugFormatLine(entry) {
     var line = document.createElement('div');
     var level = entry.level || 'info';
@@ -340,10 +348,13 @@
 
   function micDebugRenderPanel(entry) {
     if (!micDebugOn || !micDebugListEl) return;
+    var compact = micDebugIsCompact();
+    var maxLines = micDebugMaxLines();
     micDebugListEl.appendChild(micDebugFormatLine(entry));
-    while (micDebugListEl.childNodes.length > 14) {
-      micDebugListEl.removeChild(micDebugListEl.firstChild);
+    while (micDebugListEl.childNodes.length > maxLines) {
+      micDebugListEl.removeChild(compact ? micDebugListEl.lastChild : micDebugListEl.firstChild);
     }
+    if (compact) micDebugListEl.scrollTop = 0;
   }
 
   function micDebugCopyLogs() {
@@ -436,7 +447,7 @@
         micDebugOn = true;
         micDebugSetVisible(true);
         if (micDebugListEl) micDebugListEl.innerHTML = '';
-        micLogBuffer.slice(-14).forEach(micDebugRenderPanel);
+        micLogBuffer.slice(-micDebugMaxLines()).forEach(micDebugRenderPanel);
         micLog('info', 'debug.enabled', { via: 'api' });
         return micSnapshot();
       },
@@ -454,7 +465,7 @@
     };
     if (micDebugOn) {
       micDebugSetVisible(true);
-      micLogBuffer.slice(-14).forEach(micDebugRenderPanel);
+      micLogBuffer.slice(-micDebugMaxLines()).forEach(micDebugRenderPanel);
     }
     micLog('info', 'debug.init', Object.assign({ build: MIC_BUILD }, micEnvInfo()));
     if (micEnvInfo().ios && !micEnvInfo().speechRecognition) {

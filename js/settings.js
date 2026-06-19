@@ -219,8 +219,10 @@
 
     aiChat: {
       enabled: true,
-      endpoint: 'https://www.hyperlinks.space/api/ai',
+      endpoint: 'https://program.hyperlinks.space/api/ai',
       preferSameOrigin: true,
+      // Uncomment after deploying this repo on Vercel with api/ai.js + OPENAI env:
+      // sameOriginHosts: ['ctrategy.hyperlinks.space'],
       format: 'hsp',
       mode: 'chat',
       maxHistory: 12,

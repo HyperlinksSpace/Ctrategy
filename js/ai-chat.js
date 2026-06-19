@@ -8,12 +8,26 @@
   var activeController = null;
 
   function resolveEndpoint(config) {
-    if (config.preferSameOrigin && typeof window !== 'undefined') {
-      var host = window.location.hostname || '';
-      if (host.indexOf('hyperlinks.space') !== -1 || host === 'localhost' || host === '127.0.0.1') {
-        return window.location.origin.replace(/\/$/, '') + '/api/ai';
-      }
+    if (!config.preferSameOrigin || typeof window === 'undefined') {
+      return config.endpoint || '';
     }
+
+    var host = (window.location.hostname || '').toLowerCase();
+    // Only these origins actually run POST /api/ai (Vercel serverless). Static hosts
+    // such as ctrategy.hyperlinks.space on GitHub Pages must use the remote endpoint.
+    var sameOriginApiHosts = {
+      'program.hyperlinks.space': true
+    };
+    if (config.sameOriginHosts) {
+      config.sameOriginHosts.forEach(function (h) {
+        sameOriginApiHosts[String(h || '').toLowerCase()] = true;
+      });
+    }
+
+    if (sameOriginApiHosts[host]) {
+      return window.location.origin.replace(/\/$/, '') + '/api/ai';
+    }
+
     return config.endpoint || '';
   }
 

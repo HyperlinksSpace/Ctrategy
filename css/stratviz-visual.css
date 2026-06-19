@@ -836,6 +836,9 @@
   min-height: 0;
   margin-top: 8px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   font: 500 clamp(8px, 0.95vw, 10px) / 1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.02em;
   color: var(--mic-debug-green);
@@ -863,9 +866,30 @@
 }
 
 @media (max-width: 768px) {
-  .stratviz-mic-debug { padding: 8px 10px 10px; }
+  .stratviz-mic-debug {
+    justify-content: flex-start;
+    padding: 4px 8px 6px;
+  }
+
   .stratviz-mic-debug-copy { top: 5px; right: 5px; width: 26px; height: 26px; }
-  .stratviz-mic-debug-list { margin-top: 6px; font-size: 8px; line-height: 1.4; opacity: 0.42; }
+
+  .stratviz-mic-debug-list {
+    margin-top: 2px;
+    font-size: 8px;
+    line-height: 1.4;
+    opacity: 0.44;
+    mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, transparent 100%);
+  }
+}
+
+@media (max-width: 480px) {
+  .stratviz-mic-debug-list {
+    font-size: 7.5px;
+    line-height: 1.32;
+    mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 98%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 58%, transparent 98%);
+  }
 }
 
 [data-theme="light"] .stratviz-mic-debug-copy {

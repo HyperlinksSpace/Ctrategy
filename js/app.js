@@ -247,10 +247,17 @@
       return inner.scrollWidth > strip.clientWidth + 1;
     }
 
+    function isTabletStrip() {
+      return window.matchMedia && window.matchMedia('(max-width: 1024px)').matches;
+    }
+
     function syncStripLayout() {
       var overflow = stripOverflows();
+      if (isTabletStrip() && inner.scrollWidth > strip.clientWidth - 2) {
+        overflow = true;
+      }
       strip.classList.toggle('is-overflow', overflow);
-      strip.classList.toggle('is-centered', !overflow);
+      strip.classList.toggle('is-centered', !overflow && !isTabletStrip());
       if (!overflow) strip.scrollLeft = 0;
     }
 

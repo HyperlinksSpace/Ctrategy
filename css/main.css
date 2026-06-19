@@ -1986,7 +1986,8 @@ body.nav-dropdown-open { overflow: hidden; }
   width: var(--bar-float-max);
   top: auto;
   height: var(--strip-h);
-  display: block;
+  display: flex;
+  align-items: center;
   padding: 0;
   overflow-x: auto;
   overflow-y: hidden;
@@ -1995,28 +1996,27 @@ body.nav-dropdown-open { overflow: hidden; }
 }
 
 .section-strip-inner {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
   min-width: min-content;
   height: 100%;
   padding: 0 1rem;
   position: relative;
-  vertical-align: top;
+  flex: 0 0 auto;
 }
 
 .section-strip.is-overflow .section-strip-inner {
-  display: flex;
   min-width: max-content;
 }
 
 .section-strip:not(.is-overflow) {
   overflow-x: hidden;
+  justify-content: center;
 }
 
 .section-strip:not(.is-overflow) .section-strip-inner {
-  display: flex;
-  width: max-content;
+  flex: 0 1 auto;
   max-width: 100%;
   min-width: 0;
 }
@@ -2048,7 +2048,10 @@ body.nav-dropdown-open { overflow: hidden; }
 
 .section-strip.is-centered {
   overflow-x: hidden;
-  text-align: center;
+}
+
+.section-strip.is-centered:not(.is-overflow) {
+  justify-content: center;
 }
 
 .section-strip::-webkit-scrollbar { display: none; }
@@ -4519,6 +4522,32 @@ main { position: relative; z-index: 1; padding-top: var(--header-stack); padding
 
 /* Responsive */
 @media (max-width: 1024px) {
+  .section-strip {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: color-mix(in srgb, var(--header-chrome-bg) 96%, #000 4%);
+  }
+
+  .section-strip.glass-pillow {
+    background: color-mix(in srgb, var(--header-chrome-bg) 94%, #06080f 6%);
+    backdrop-filter: saturate(1.45) blur(10px);
+    -webkit-backdrop-filter: saturate(1.45) blur(10px);
+  }
+
+  .section-strip:not(.is-overflow) {
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+
+  .section-strip-inner {
+    flex: 0 0 auto;
+    min-width: max-content;
+  }
+
+  .section-strip.is-overflow .section-strip-undercover {
+    display: none;
+  }
+
   .hero--fullscreen .hero-stage { min-height: calc(100dvh - var(--strip-stack)); }
   .ai-core-panel { max-height: calc(100% - 1rem); }
   .ai-core-messages { max-height: min(360px, 48vh); flex: 1; }
