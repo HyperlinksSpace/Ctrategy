@@ -37,7 +37,7 @@ window.HLS_I18N.zh = {
     'promo.f2': '链上智能层',
     'promo.f3': '托管交易室',
     'promo.cta': '打开 hyperlinks.space',
-    'promo.headerLink': '推广',
+    'promo.headerLink': '主站',
     'promo.footerLink': 'hyperlinks.space',
     'vision.tag': '01 · 执行摘要',
     'vision.title': '控制平面为何必须变革',

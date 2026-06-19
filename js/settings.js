@@ -7,7 +7,7 @@
 
   window.HLS_SETTINGS = {
     promo: {
-      headerLabel: 'Promo',
+      headerLabel: 'The Main',
       badge: 'Live · Production',
       title: 'Hyperlinks Space Program',
       url: 'https://www.hyperlinks.space/',

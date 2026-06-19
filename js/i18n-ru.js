@@ -37,7 +37,7 @@ window.HLS_I18N.ru = {
   'promo.f2': 'Искусственный интеллект на цепочке',
   'promo.f3': 'Сделки с эскроу',
   'promo.cta': 'Открыть hyperlinks.space',
-  'promo.headerLink': 'Промо',
+  'promo.headerLink': 'Глагне',
   'promo.footerLink': 'hyperlinks.space',
   'vision.tag': '01 · Резюме для руководства',
   'vision.title': 'Почему нужно менять уровень управления',

@@ -37,7 +37,7 @@ window.HLS_I18N = {
     'promo.f2': 'On-chain AI layer',
     'promo.f3': 'Escrow deal rooms',
     'promo.cta': 'Open hyperlinks.space',
-    'promo.headerLink': 'Promo',
+    'promo.headerLink': 'The Main',
     'promo.footerLink': 'hyperlinks.space',
     'vision.tag': '01 · Executive Summary',
     'vision.title': 'Why the Control Plane Must Change',
