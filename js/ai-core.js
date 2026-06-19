@@ -598,7 +598,7 @@
   }
 
   function isGenerating() {
-    return state.aiPending || state.typing;
+    return state.aiPending || state.typing || state.speaking;
   }
 
   function setGeneratingUI(active) {
@@ -606,6 +606,7 @@
     if (active == null) active = isGenerating();
     state.formEl.classList.toggle('is-generating', active);
     if (state.stopBtn) {
+      state.stopBtn.disabled = !active;
       state.stopBtn.setAttribute('aria-label', t('ai.stop'));
       state.stopBtn.title = t('ai.stop');
     }
@@ -638,6 +639,11 @@
     }
     if (state.typing) {
       cancelTyping();
+    }
+    if (state.tourActive) {
+      stopTour();
+    } else if (state.speaking) {
+      stopSpeech();
     }
     setGeneratingUI(false);
     if (wasActive) releaseOrbIdle(350);
@@ -1359,8 +1365,11 @@
         state.typingBubble = null;
         bubble.classList.remove('ai-core-msg--typing');
         state.typing = false;
-        setGeneratingUI(false);
-        if (done) done();
+        if (done) {
+          done();
+        } else {
+          setGeneratingUI(false);
+        }
       }
     }
 
@@ -1383,12 +1392,14 @@
 
     function finish() {
       if (speakLine) {
-        speakAsync(speakLine).then(function () {
+        speakAsync(speakLine).then(function (ok) {
+          if (ok === false) return;
           afterSpeech();
         });
         return;
       }
       if (!state.speaking) releaseOrbIdle(450);
+      setGeneratingUI(false);
       afterSpeech();
     }
 
@@ -1461,6 +1472,7 @@
       state.speechResolve = null;
     }
     state.speaking = false;
+    setGeneratingUI(false);
   }
 
   function buildUtterance(text, lang) {
@@ -1482,6 +1494,7 @@
     function finish(ok) {
       state.speaking = false;
       stopSpeechKeepalive();
+      setGeneratingUI(false);
       if (state.speechResolve === resolve) state.speechResolve = null;
       if (!state.typing) releaseOrbIdle(650);
       resolve(!!ok);
@@ -1556,6 +1569,7 @@
 
       state.speechResolve = resolve;
       state.speaking = true;
+      setGeneratingUI(true);
       startSpeechKeepalive();
       emitOrb('speaking');
 
@@ -1570,6 +1584,7 @@
           if (!utterance) {
             state.speaking = false;
             stopSpeechKeepalive();
+            setGeneratingUI(false);
             state.speechResolve = null;
             resolve(true);
             return;
@@ -1578,6 +1593,7 @@
             if (gen !== speechQueueGen) return;
             state.speaking = false;
             stopSpeechKeepalive();
+            setGeneratingUI(false);
             if (state.speechResolve === resolve) state.speechResolve = null;
             if (!state.typing) releaseOrbIdle(650);
             resolve(true);
@@ -1591,6 +1607,7 @@
             }
             state.speaking = false;
             stopSpeechKeepalive();
+            setGeneratingUI(false);
             if (state.speechResolve === resolve) state.speechResolve = null;
             if (!state.typing) releaseOrbIdle(400);
             resolve(false);
