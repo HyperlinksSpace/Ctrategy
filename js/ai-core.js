@@ -148,7 +148,6 @@
     messagesEl: null,
     chipsEl: null,
     inputEl: null,
-    inputBaseHeight: 0,
     formEl: null,
     stopBtn: null,
     voiceBtn: null,
@@ -3097,41 +3096,36 @@
     });
   }
 
-  function getInputMinHeight() {
-    if (!state.formEl) return 0;
-    var raw = getComputedStyle(state.formEl).getPropertyValue('--ai-form-control-h').trim();
-    if (!raw) return 0;
-    var root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    if (raw.indexOf('rem') !== -1) return Math.round(parseFloat(raw) * root);
-    if (raw.indexOf('px') !== -1) return parseFloat(raw);
-    return parseFloat(raw) || 0;
+  function getInputLineHeight() {
+    if (!state.inputEl) return 0;
+    var lh = parseFloat(getComputedStyle(state.inputEl).lineHeight);
+    if (!isNaN(lh) && lh > 0) return lh;
+    var fs = parseFloat(getComputedStyle(state.inputEl).fontSize) || 14;
+    return fs * 1.35;
   }
 
   function syncInputHeight() {
     if (!state.inputEl) return;
     var max = window.matchMedia && window.matchMedia('(max-width: 768px)').matches ? 104 : 120;
-    var minH = getInputMinHeight();
+    var lineH = getInputLineHeight();
     var val = state.inputEl.value;
 
+    state.inputEl.style.height = 'auto';
+    var scrollH = state.inputEl.scrollHeight;
+
     if (!val) {
-      state.inputEl.style.height = '';
+      state.inputEl.style.height = lineH + 'px';
       state.inputEl.style.overflowY = 'hidden';
-      state.inputBaseHeight = minH;
       if (state.formEl) state.formEl.classList.remove('is-input-expanded');
       return;
     }
 
-    state.inputEl.style.height = 'auto';
-    var scrollH = state.inputEl.scrollHeight;
-    if (!state.inputBaseHeight) state.inputBaseHeight = minH;
-    var expanded = scrollH > state.inputBaseHeight + 1;
-
+    var expanded = scrollH > lineH + 1;
     if (expanded) {
-      var next = Math.min(scrollH, max);
-      state.inputEl.style.height = next + 'px';
+      state.inputEl.style.height = Math.min(scrollH, max) + 'px';
       state.inputEl.style.overflowY = scrollH > max ? 'auto' : 'hidden';
     } else {
-      state.inputEl.style.height = '';
+      state.inputEl.style.height = lineH + 'px';
       state.inputEl.style.overflowY = 'hidden';
     }
 
@@ -3141,7 +3135,6 @@
   }
 
   function resetInputBaseHeight() {
-    state.inputBaseHeight = 0;
     syncInputHeight();
   }
 
